@@ -50,7 +50,7 @@ $(BIN):$(LINK_OBJ)
 	@echo $(BIN)
 #一些变量：$@：目标，     $^：所有目标依赖
 # gcc -o 是生成可执行文件
-	$(CC) -o $@ $^
+	$(CC) -llog4cpp -o $@ $^ 
 
 $(OOBJ_DIR)/%.o:%.cpp
 	$(CC) -I$(INCLUDE_PATH) -c $^ -o $@

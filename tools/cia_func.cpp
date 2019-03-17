@@ -35,5 +35,17 @@ void EraseAnnoation(std::string& s){
     if(index > 0){
         s = s.substr(0, index);
     }
+}
+
+// ------------ 可变参数拼接操作 ------------------
+int args_printf(std::string& result, const char* fmt, va_list args){
     
+    char* ch_res = new char[LOGS_SINGLE_MAX_CHARACTERS];
+    memset(ch_res, 0, LOGS_SINGLE_MAX_CHARACTERS);
+    
+    int size = vsprintf(ch_res, fmt, args);
+    if(size > 0){
+        result = ch_res;
+    }
+    return size;
 }

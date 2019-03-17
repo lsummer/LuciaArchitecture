@@ -7,5 +7,6 @@
 #include <fstream>
 #include <algorithm>
 #include <map>
-
+#include "log4cpp/Category.hh"
+#include "log4cpp/PropertyConfigurator.hh"
 #endif

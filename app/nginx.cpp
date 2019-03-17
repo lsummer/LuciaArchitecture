@@ -6,6 +6,9 @@
 #include "header.h"
 #include "cia_conf.h"
 #include "cia_setproctitle.h"
+#include "cia_log.h"
+#include "cia_kernal_func.h"
+
 
 using namespace std;
 
@@ -16,7 +19,7 @@ char **g_os_argv; // 命令行参数
 int main(int argc, char* argv[]){ 
     string conf_file_path = "./lucia.conf";  // 配置文件的默认地址
 
-// ----------- 1. 读取参数配置信息 ---------------
+    // ----------- 1. 读取参数配置信息 ---------------
     /*
         --file -f path : 加载path位置处的配置文件
     */
@@ -50,12 +53,12 @@ int main(int argc, char* argv[]){
 
     // strcpy(argv[0], "luc");  可以通过这个命令修改运行的COMM信息，但是这样子是不安全的；
 
-// ----------- 2. 修改环境变量的位置，为修改进程的COMM做准备 ----------- 
+    // ----------- 2. 修改环境变量的位置，为修改进程的COMM做准备 ----------- 
     g_os_argv = argv;
     cia_init_setprcotitle();
-    cia_setproctitle("lucia:master process");  // 修改
+    cia_setproctitle("lucia: master process");  // 修改进程名称为lucia: master process
 
-// ----------- 3. 读取配置文件    ---------------
+    // ----------- 3. 读取配置文件    ---------------
     // 配置文件的单例模式实例：conf_file_instance
     CConfig* conf_file_instance = CConfig::getInstance();
     //  读取配置文件
@@ -63,9 +66,11 @@ int main(int argc, char* argv[]){
         cout << "配置文件加载失败，退出！" << endl;
         exit(1);
     }
+    //    conf_file_instance->test_showAllitem();  日志文件测试
     
-    // conf_file_instance->test_showAllitem();
-    cout << conf_file_instance->GetIntDefault("port") << endl;
+    // ----------- 4. 设置日志，采用log4cpp ---------------------
+    cia_logs_init();   //  日志文件初始化
+    LOG_ERR(log4cpp::Priority::INFO, "----------重新启动-------------");
 
     
 

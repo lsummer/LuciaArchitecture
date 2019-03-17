@@ -2,6 +2,7 @@
 #include <iostream>
 #include "cia_global.h"
 
+// 将环境变量搬家
 void cia_init_setprcotitle(){
     g_environment = 0;
 
@@ -29,10 +30,8 @@ void cia_init_setprcotitle(){
     // std::cout<<"-----------------环境变量"<<std::endl;
 }
 
+// 设置进程名称
 void cia_setproctitle(const std::string& procname){
-    
-
-    std::cout << "长度：" << g_environment << std::endl;
     int lenth = procname.length();
     int argv_len = 0;
     for(int i=0; g_os_argv[i] != NULL; i++){
