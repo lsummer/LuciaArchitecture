@@ -9,4 +9,7 @@
 #include <map>
 #include "log4cpp/Category.hh"
 #include "log4cpp/PropertyConfigurator.hh"
+
+#include <signal.h>
+#include <unistd.h>
 #endif

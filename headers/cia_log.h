@@ -38,6 +38,17 @@
         CClog::getLog().error_log(level, format, ##args); \
     }while(0);
 
+// 定义错误级别
+
+#define DEBUG log4cpp::Priority::DEBUG
+#define INFO log4cpp::Priority::INFO
+#define NOTICE log4cpp::Priority::NOTICE
+#define WARN log4cpp::Priority::WARN
+#define ERROR log4cpp::Priority::ERROR
+#define CRIT log4cpp::Priority::CRIT
+#define ALERT log4cpp::Priority::ALERT
+#define FATAL log4cpp::Priority::FATAL
+
 class CClog{
 private:
     CClog();

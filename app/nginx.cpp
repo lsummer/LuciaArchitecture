@@ -8,16 +8,25 @@
 #include "cia_setproctitle.h"
 #include "cia_log.h"
 #include "cia_kernal_func.h"
-
-
 using namespace std;
 
 // 全局变量
 int g_environment = 0; // 环境变量的长度
 char **g_os_argv; // 命令行参数 
+char *new_environment = NULL; //新申请的存放环境变量的空间，主要用于释放
+
+void freesource(){
+    if(new_environment != NULL) delete []new_environment;
+    new_environment = NULL;
+
+    log4cpp::Category::shutdown();
+}
 
 int main(int argc, char* argv[]){ 
+    
     string conf_file_path = "./lucia.conf";  // 配置文件的默认地址
+    
+    int exitcode = 0;
 
     // ----------- 1. 读取参数配置信息 ---------------
     /*
@@ -54,9 +63,9 @@ int main(int argc, char* argv[]){
     // strcpy(argv[0], "luc");  可以通过这个命令修改运行的COMM信息，但是这样子是不安全的；
 
     // ----------- 2. 修改环境变量的位置，为修改进程的COMM做准备 ----------- 
+    
     g_os_argv = argv;
     cia_init_setprcotitle();
-    cia_setproctitle("lucia: master process");  // 修改进程名称为lucia: master process
 
     // ----------- 3. 读取配置文件    ---------------
     // 配置文件的单例模式实例：conf_file_instance
@@ -67,16 +76,30 @@ int main(int argc, char* argv[]){
         exit(1);
     }
     //    conf_file_instance->test_showAllitem();  日志文件测试
-    
     // ----------- 4. 设置日志，采用log4cpp ---------------------
     cia_logs_init();   //  日志文件初始化
-    LOG_ERR(log4cpp::Priority::INFO, "----------重新启动-------------");
+    LOG_ERR(INFO, "----------重新启动-------------");
 
-    
-
-    while(1){
-        sleep(5);
+    if(cia_init_signals() < 0){
+        exitcode = 1;
+        goto libexist;
     }
 
-    return 0;
+    // 按照守护进程的方式进行执行
+    if(CConfig::getInstance()->GetIntDefault("Daemon") == 1){
+        exitcode = cia_daemon();
+        if(exitcode != 0){
+            goto libexist;
+        }
+        // cout<<"继续happey" <<endl;
+    }
+    // 进程开始执行
+    cia_master_process_cycle(); 
+
+libexist:
+    freesource();
+
+    cout << g_os_argv <<endl;
+    cout << long_options <<endl;
+    return exitcode;
 }

@@ -7,5 +7,5 @@ all:
 	done
 
 clean:
-	-rm -f exec
+	-rm -f lucia
 	-rm -f $(BUILD_ROOT)/app/dlink_obj/*.d $(BUILD_ROOT)/app/oobj/*.o

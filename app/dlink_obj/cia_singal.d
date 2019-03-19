@@ -1,7 +1,4 @@
-cia_kernal_func.o: cia_kernal_func.cpp \
-  /Users/lxy/Desktop/mynginx/headers/cia_kernal_func.h \
-  /Users/lxy/Desktop/mynginx/headers/cia_log.h \
-  /Users/lxy/Desktop/mynginx/headers/header.h \
+cia_singal.o: cia_singal.cpp /Users/lxy/Desktop/mynginx/headers/header.h \
   /usr/local/include/log4cpp/Category.hh \
   /usr/local/include/log4cpp/Portability.hh \
   /usr/local/include/log4cpp/config.h \
@@ -18,6 +15,7 @@ cia_kernal_func.o: cia_kernal_func.cpp \
   /usr/local/include/log4cpp/convenience.h \
   /usr/local/include/log4cpp/PropertyConfigurator.hh \
   /usr/local/include/log4cpp/Configurator.hh \
+  /Users/lxy/Desktop/mynginx/headers/cia_log.h \
   /Users/lxy/Desktop/mynginx/headers/cia_func.h \
   /Users/lxy/Desktop/mynginx/headers/cia_conf.h \
   /Users/lxy/Desktop/mynginx/headers/cia_global.h

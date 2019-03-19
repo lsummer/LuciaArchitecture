@@ -10,24 +10,24 @@ void cia_init_setprcotitle(){
         g_environment += (strlen(environ[i]) + 1);
     }
     // for(int i=0; environ[i] != NULL; i++){
-    //     std::cout<<environ[i]<<std::endl;
+    //     std::cout<<environ[i];
     // }
-    char* new_environment = new char[g_environment];
+    new_environment = new char[g_environment];
 
     memset(new_environment, 0, g_environment);
 
     char *p = new_environment;
 
     for(int i=0; environ[i] != NULL; i++){
-        memcpy(p, environ[i], strlen(environ[i])+1);
+        strcpy(p, environ[i]);
         environ[i] = p;
         p = p + 1 + strlen(environ[i]);
     }
-
-    // for(int i=0; environ[i] != NULL; i++){
-    //     std::cout<<environ[i];
-    // }
     // std::cout<<"-----------------环境变量"<<std::endl;
+    // for(int i=0; environ[i] != NULL; i++){
+    //     std::cout<<environ[i] ;
+    // }
+    
 }
 
 // 设置进程名称

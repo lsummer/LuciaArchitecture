@@ -47,5 +47,7 @@ int args_printf(std::string& result, const char* fmt, va_list args){
     if(size > 0){
         result = ch_res;
     }
+    delete []ch_res;
+    ch_res = NULL;
     return size;
 }

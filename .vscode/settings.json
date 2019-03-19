@@ -52,6 +52,17 @@
         "vector": "cpp",
         "fstream": "cpp",
         "map": "cpp",
-        "__tree": "cpp"
+        "__tree": "cpp",
+        "array": "cpp",
+        "cmath": "cpp",
+        "complex": "cpp",
+        "deque": "cpp",
+        "iomanip": "cpp",
+        "list": "cpp",
+        "set": "cpp",
+        "sstream": "cpp",
+        "strstream": "cpp",
+        "thread": "cpp",
+        "typeindex": "cpp"
     }
 }

@@ -6,8 +6,6 @@ CClog::CClog(){
 
 CClog::~CClog(){ 
     cleanup();
-    delete access;
-    delete error;
 }
 
 void CClog::init(){
