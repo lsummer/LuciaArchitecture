@@ -1,5 +1,6 @@
-cia_daemon.o: cia_daemon.cpp \
-  /Users/lxy/Desktop/mynginx/headers/cia_setproctitle.h \
+cia_socket.o: cia_socket.cpp \
+  /Users/lxy/Desktop/mynginx/headers/cia_socket.h \
+  /Users/lxy/Desktop/mynginx/headers/cia_conf.h \
   /Users/lxy/Desktop/mynginx/headers/header.h \
   /usr/local/include/log4cpp/Category.hh \
   /usr/local/include/log4cpp/Portability.hh \
@@ -17,7 +18,6 @@ cia_daemon.o: cia_daemon.cpp \
   /usr/local/include/log4cpp/convenience.h \
   /usr/local/include/log4cpp/PropertyConfigurator.hh \
   /usr/local/include/log4cpp/Configurator.hh \
+  /Users/lxy/Desktop/mynginx/headers/cia_global.h \
   /Users/lxy/Desktop/mynginx/headers/cia_log.h \
-  /Users/lxy/Desktop/mynginx/headers/cia_func.h \
-  /Users/lxy/Desktop/mynginx/headers/cia_conf.h \
-  /Users/lxy/Desktop/mynginx/headers/cia_global.h
+  /Users/lxy/Desktop/mynginx/headers/cia_func.h

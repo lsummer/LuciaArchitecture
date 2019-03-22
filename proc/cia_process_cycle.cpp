@@ -29,7 +29,11 @@ void clearsigmask(){
     }
 }
 
-void worker_process_init(){
+// 参数i表示是第几个worker进程
+void worker_process_init(int i){
+
+    process_type = i; // 通过process_type表示这个进程是父进程还是子进程
+
     LOG_ERR(WARN, "子进程 pid=%d 创建成功", getpid());
     // 清空信号
     clearsigmask();
@@ -52,7 +56,7 @@ void cia_create_worker_process(int workers){
             LOG_ERR(WARN, "master进程创建子进程失败");
         }else if(pid == 0){ //创建的子进程
             
-            worker_process_init();
+            worker_process_init(i+1);
             
         }
     }
@@ -66,7 +70,7 @@ void  cia_master_process_cycle(){
     if(sigprocmask(SIG_BLOCK, &sig_new, NULL) == -1){
         LOG_ERR(WARN, "恢复父进程 pid=%d 的信号屏蔽字失败", getpid());
     }
-
+    process_type = 0;
     int worker_process_number = CConfig::getInstance()->GetIntDefault("workers");
 
     // 创建子进程

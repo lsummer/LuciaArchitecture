@@ -8,12 +8,16 @@
 #include "cia_setproctitle.h"
 #include "cia_log.h"
 #include "cia_kernal_func.h"
+#include "cia_socket.h"
 using namespace std;
 
 // 全局变量
 int g_environment = 0; // 环境变量的长度
 char **g_os_argv; // 命令行参数 
 char *new_environment = NULL; //新申请的存放环境变量的空间，主要用于释放
+int process_type = 0;
+
+CSocket socket_ctl;
 
 void freesource(){
     if(new_environment != NULL) delete []new_environment;
@@ -84,6 +88,11 @@ int main(int argc, char* argv[]){
         exitcode = 1;
         goto libexist;
     }
+    
+    if(socket_ctl.socket_init() == false){  // 设置监听端口
+        exitcode = 2; 
+        goto libexist;
+    }
 
     // 按照守护进程的方式进行执行
     if(CConfig::getInstance()->GetIntDefault("Daemon") == 1){
@@ -98,8 +107,5 @@ int main(int argc, char* argv[]){
 
 libexist:
     freesource();
-
-    cout << g_os_argv <<endl;
-    cout << long_options <<endl;
     return exitcode;
 }
