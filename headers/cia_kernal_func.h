@@ -6,9 +6,10 @@
 void cia_logs_init();
 // ---------- 信号初始化 ----------------------
 int cia_init_signals(); 
-// ---------- 开始执行创建子进程 ---------------
+// ---------- 开始执行创建子进程  ---------------
 void cia_master_process_cycle();
-// ---------- 设置守护进程 --------------------
+// ---------- 设置守护进程   --------------------
 int cia_daemon();
 
+void cia_process_events_and_timers();  // worker的业务处理程序
 #endif

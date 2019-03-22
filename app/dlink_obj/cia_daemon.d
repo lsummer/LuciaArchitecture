@@ -19,5 +19,4 @@ cia_daemon.o: cia_daemon.cpp \
   /usr/local/include/log4cpp/Configurator.hh \
   /Users/lxy/Desktop/mynginx/headers/cia_log.h \
   /Users/lxy/Desktop/mynginx/headers/cia_func.h \
-  /Users/lxy/Desktop/mynginx/headers/cia_conf.h \
-  /Users/lxy/Desktop/mynginx/headers/cia_global.h
+  /Users/lxy/Desktop/mynginx/headers/cia_conf.h

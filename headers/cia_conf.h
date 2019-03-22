@@ -12,7 +12,6 @@
 ------------------------------------  */
 
 #include "header.h"
-#include "cia_global.h"
 
 class CConfig{
 private:

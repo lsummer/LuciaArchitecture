@@ -17,4 +17,8 @@ cia_setproctitle.o: cia_setproctitle.cpp \
   /usr/local/include/log4cpp/convenience.h \
   /usr/local/include/log4cpp/PropertyConfigurator.hh \
   /usr/local/include/log4cpp/Configurator.hh \
-  /Users/lxy/Desktop/mynginx/headers/cia_global.h
+  /Users/lxy/Desktop/mynginx/headers/cia_global.h \
+  /Users/lxy/Desktop/mynginx/headers/cia_socket.h \
+  /Users/lxy/Desktop/mynginx/headers/cia_conf.h \
+  /Users/lxy/Desktop/mynginx/headers/cia_log.h \
+  /Users/lxy/Desktop/mynginx/headers/cia_func.h

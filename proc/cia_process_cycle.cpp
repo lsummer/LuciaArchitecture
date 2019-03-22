@@ -20,6 +20,8 @@
 #include "cia_setproctitle.h"
 #include "signal.h"
 #include "cia_log.h"
+#include "cia_kernal_func.h"
+#include "cia_global.h"
 // 清楚子进程的信号监听
 void clearsigmask(){
     sigset_t set;
@@ -35,14 +37,21 @@ void worker_process_init(int i){
     process_type = i; // 通过process_type表示这个进程是父进程还是子进程
 
     LOG_ERR(WARN, "子进程 pid=%d 创建成功", getpid());
+
+    if(socket_ctl.epoll_init()== false){  // 设置epoll
+        LOG_ERR(WARN, "子进程 pid=%d 设置epoll_init()失败，退出", getpid());
+        return;
+    }
     // 清空信号
     clearsigmask();
     // 子进程初始化
     cia_setproctitle("lucia: worker process");  // 修改进程名称为lucia: worker process
 
     for(;;){
-        sleep(3);
-        // LOG_ERR(INFO, "子进程pid=%d执行中。。。", getpid());
+        
+        cia_process_events_and_timers();
+        // sleep(3);
+        // 
     }
 }
 
