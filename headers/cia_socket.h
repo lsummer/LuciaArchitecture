@@ -81,13 +81,14 @@ private:
     std::atomic<int> node_number;// 当前FreeLink中有多少个空闲链
     Kevent_Node* header; // 头结点
 };
-
-class FD_PORT{
+// TODO 要加一个字段，是读还是写
+class FD_PORT{  
 public:
     int fd;   // 描述符
     int port;  // 对应的监听端口
+    bool wr_flag;  // 读写标记，因为kqueue自身是分离读和写的，所以要加上这个标记, 读是True， 写是false
     Kevent_Node* event;  //处理该描述符相关 的区域
-    FD_PORT(int fd, int port):fd(fd),port(port), event(NULL){}
+    FD_PORT(int fd, bool wr_flag, int port):fd(fd),port(port),wr_flag(wr_flag), event(NULL){}
 };
 
 class CSocket{

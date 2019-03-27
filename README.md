@@ -22,10 +22,10 @@
     socket() -> setsockopt() -> fcntl() -> bind() -> listen()
     设置socket()套接字 -> 设置ipv4,SO_REUSEADDR -> 设置非阻塞 -> 绑定监听端口 -> 监听端口
     ip和端口号要进行htonl(),htons()将本机序转化成网络序实现
-
-    
-    epoll LT;
-    epoll ET;
+    reactor反应堆模式
+    macos:  采用kqueue
+    liunx:  采用epoll
+    ![惊群效应](./thundering_herd.jpg)
 
 #### 步骤7.worker进程开启多线程
     线程池的回收？

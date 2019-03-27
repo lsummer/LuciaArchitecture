@@ -60,7 +60,7 @@ bool CSocket::socket_init(){
             LOG_ERR(ERROR, "CSocket::socket_init() 中 listen() 监听端口失败，直接退出！");
             return false;
         }
-        FD_PORT* fd_port = new FD_PORT(sock, port1);
+        FD_PORT* fd_port = new FD_PORT(sock,true, port1);
         fd_ports.push_back(fd_port);
 
         init_success = true;
@@ -90,6 +90,11 @@ bool CSocket::setnoneblocking(int fd){
 void CSocket::closesocket(){
     for(int i=0; i<fd_ports.size(); i++){
         close(fd_ports[i]->fd);
+        if(fd_ports[i]->event != NULL){
+            delete fd_ports[i]->event;
+            fd_ports[i]->event = NULL;
+        }
+        
         delete fd_ports[i];
         fd_ports[i] = NULL;
     }
@@ -122,7 +127,7 @@ bool CSocket::epoll_init_macos(){
     int er_judge = -1;
     for(int i=0; i<fd_ports.size(); i++){
         FD_PORT*  fd_port = fd_ports[i];
-        if(cia_add_epoll(fd_port, 1, 0, &CSocket::cia_socket_accept) == false){
+        if(cia_add_epoll(fd_port, fd_port->wr_flag?1:0, fd_port->wr_flag?0:1, &CSocket::cia_socket_accept) == false){
             er_judge = i;
             break;
         }
@@ -151,10 +156,9 @@ bool CSocket::epoll_init_macos(){
 bool CSocket::epoll_init_linux(){
     return false;
 }
-
+// 存在惊群效应
 void CSocket::cia_socket_accept(Kevent_Node* kn){
     //  accept 也是要设置为非阻塞的，且建立完一个连接就要把这个连接加入到epoll中去
-    LOG_ERR(INFO, "pid = %d 建立连接！", getpid());
     struct sockaddr_in client_addr;
     socklen_t len = sizeof(client_addr);
     
@@ -189,10 +193,10 @@ void CSocket::cia_socket_accept(Kevent_Node* kn){
     }
     
     int current_link =  fd_ports.size();
-    FD_PORT* fd_port = new FD_PORT(accept_fd, 0);
+    FD_PORT* fd_port = new FD_PORT(accept_fd,true, 0);
 
     // TODO 处理连接请求发来的数据
-    if(cia_add_epoll(fd_port, 1, 0,  &CSocket::cia_wait_request_handler) == false){
+    if(cia_add_epoll(fd_port, fd_port->wr_flag?1:0, fd_port->wr_flag?0:1,  &CSocket::cia_wait_request_handler) == false){
         delete fd_port;
         return;
     } 
@@ -200,6 +204,7 @@ void CSocket::cia_socket_accept(Kevent_Node* kn){
 
     // accept_fd 说明连接已经建立，要将该连接加入到kevent里面去
 }
+
 // 添加一个文件描述符到kqueue中去，向fd_ports中加入一个,该函数并没有加，所以要在外面加，然后申请一个free_node
 // read 表示读描述符，write表示写描述符，handler为回调函数
 bool CSocket::cia_add_epoll(FD_PORT* fd_port, int read, int write, cia_event_handler_ptr handler){
@@ -241,13 +246,16 @@ void CSocket::cia_del_epoll(int fd){
             break;
         }
     }
-    EV_SET(&kev2, fd, EVFILT_WRITE, EV_DELETE, NULL, 0, (*itre)->event);
-    kevent(kqueue_fd, &kev2, 1, NULL, 0, NULL);
-    free_link->insert_Node((*itre)->event);
+    LOG_ERR(WARN, "cia_del_epoll()是否出现错误：%d", itre == fd_ports.end())
     
-    delete (*itre);
-    (*itre) = NULL;
     if(itre != fd_ports.end()){
+        
+        EV_SET(&kev2, fd, (*itre)->wr_flag?EVFILT_READ:EVFILT_WRITE, EV_DELETE, NULL, 0, (*itre)->event);
+        kevent(kqueue_fd, &kev2, 1, NULL, 0, NULL);
+        free_link->insert_Node((*itre)->event);
+        
+        delete (*itre);
+        (*itre) = NULL;
         fd_ports.erase(itre);
     }
 }
@@ -255,5 +263,31 @@ void CSocket::cia_del_epoll(int fd){
 void CSocket::cia_wait_request_handler(Kevent_Node* kn){
     
     LOG_ERR(INFO, "pid = %d 来了数据了来了数据了", getpid());
-    sleep(3);
+    char buffer[100];
+    int n = recv(kn->fd,buffer, 100, 0);
+    if(n == 0){  // 表示客户端断开了连接
+        //断开连接
+        LOG_ERR(WARN, "断开连接");
+        cia_del_epoll(kn->fd);
+        return;
+    }
+    if(n < 0){
+        int err = errno;
+        if(err == EAGAIN || err == EWOULDBLOCK){// 不算错误
+            LOG_ERR(WARN,"收到EAGAIN");
+            return;
+        }
+        if(err == EINTR){
+            LOG_ERR(WARN, "收包被信号打断");
+            return;
+        }
+        if(err == ECONNRESET){ // 客户端强行关闭
+            LOG_ERR(WARN, "客户端强心关闭");
+        }else{
+            LOG_ERR(WARN, "打印看看出现什么错误：err=%d", err);
+        }
+        return;
+    }
+    
+    LOG_ERR(INFO, "收到数据：%s", buffer);
 }

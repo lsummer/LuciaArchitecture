@@ -9,6 +9,7 @@
 #include "cia_log.h"
 #include "cia_kernal_func.h"
 #include "cia_socket.h"
+#include "cia_threadpoo.h"
 using namespace std;
 
 // 全局变量
@@ -18,6 +19,7 @@ char *new_environment = NULL; //新申请的存放环境变量的空间，主要
 int process_type = 0;
 
 CSocket socket_ctl;
+CThreadPoll threadpoll;
 
 void freesource(){
     if(new_environment != NULL) delete []new_environment;

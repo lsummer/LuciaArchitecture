@@ -37,6 +37,10 @@ void worker_process_init(int i){
     process_type = i; // 通过process_type表示这个进程是父进程还是子进程
 
     LOG_ERR(WARN, "子进程 pid=%d 创建成功", getpid());
+    if(threadpoll.create(10) == false){
+        exit(-2);
+    }
+    sleep(1);
 
     if(socket_ctl.epoll_init()== false){  // 设置epoll
         LOG_ERR(WARN, "子进程 pid=%d 设置epoll_init()失败，退出", getpid());
@@ -44,6 +48,7 @@ void worker_process_init(int i){
     }
     // 清空信号
     clearsigmask();
+    
     // 子进程初始化
     cia_setproctitle("lucia: worker process");  // 修改进程名称为lucia: worker process
 

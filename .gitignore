@@ -1,0 +1,6 @@
+.git/
+.vscode/
+Log/
+exec.dSYM/
+*.o
+*.d

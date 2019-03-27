@@ -2,6 +2,7 @@
 #define __HEADERS_CIA_GLOBAL_H__
 
 #include "cia_socket.h"
+#include "cia_threadpoo.h"
 
 //外部全局量声明
 extern int g_environment; // 环境变量的长度
@@ -12,5 +13,6 @@ extern char *new_environment; // 新申请的环境变量区域,存这个值主�
 extern int process_type;  // 是master进程还是worker进程，master进程为0， worker进程为1，2，3，4
 
 extern CSocket socket_ctl; 
+extern CThreadPoll threadpoll;
 
 #endif
