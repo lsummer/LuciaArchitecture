@@ -112,7 +112,7 @@ bool CSocket::epoll_init(){ //epoll的使用是linux only 而 macos是unix-like�
 
 bool CSocket::epoll_init_macos(){
     kqueue_fd = kqueue();
-    LOG_ERR(INFO, "worker进程pid=%d中CSocket::epoll_init()设置成功！",getpid()) ;
+    // LOG_ERR(INFO, "worker进程pid=%d中CSocket::epoll_init()设置成功！",getpid()) ;
         
     if(kqueue_fd == -1){
         LOG_ERR(ERROR, "worker进程pid=%d中CSocket::epoll_init() 中 kqueue() 监听端口失败，直接退出！",getpid()) ;
@@ -149,7 +149,7 @@ bool CSocket::epoll_init_macos(){
     // struct kevent ev;
 
     // EV_SET(&ev, sock, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, 0);
-    LOG_ERR(INFO, "worker进程pid=%d中CSocket::epoll_init()设置成功，函数退出！",getpid()) ;
+    // LOG_ERR(INFO, "worker进程pid=%d中CSocket::epoll_init()设置成功，函数退出！",getpid()) ;
     return true;
     // epoll_create(work_connection); // work_connection是指epoll红黑树的节点个数，大于0即可，实际上这个数字已经没有用了
 }
@@ -246,7 +246,7 @@ void CSocket::cia_del_epoll(int fd){
             break;
         }
     }
-    LOG_ERR(WARN, "cia_del_epoll()是否出现错误：%d", itre == fd_ports.end())
+    // LOG_ERR(WARN, "cia_del_epoll()是否出现错误：%d", itre == fd_ports.end())
     
     if(itre != fd_ports.end()){
         
@@ -262,7 +262,7 @@ void CSocket::cia_del_epoll(int fd){
 
 void CSocket::cia_wait_request_handler(Kevent_Node* kn){
     
-    LOG_ERR(INFO, "pid = %d 来了数据了来了数据了", getpid());
+    // LOG_ERR(INFO, "pid = %d 来了数据了来了数据了", getpid());
     char buffer[100];
     int n = recv(kn->fd,buffer, 100, 0);
     if(n == 0){  // 表示客户端断开了连接

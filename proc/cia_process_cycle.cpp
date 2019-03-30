@@ -37,15 +37,19 @@ void worker_process_init(int i){
     process_type = i; // 通过process_type表示这个进程是父进程还是子进程
 
     LOG_ERR(WARN, "子进程 pid=%d 创建成功", getpid());
-    if(threadpoll.create(10) == false){
+   
+    int thread_number = CConfig::getInstance()->GetIntDefault("Thread_number");
+
+    if(threadpoll.create(thread_number) == false){
         exit(-2);
     }
-    sleep(1);
+    sleep(1);  // 等等线程的创建，等1秒
 
     if(socket_ctl.epoll_init()== false){  // 设置epoll
         LOG_ERR(WARN, "子进程 pid=%d 设置epoll_init()失败，退出", getpid());
         return;
     }
+    // threadpoll.stopAll();  // 测试线程池关闭
     // 清空信号
     clearsigmask();
     
