@@ -28,13 +28,21 @@
     ![惊群效应](./thundering_herd.jpg)
 
 #### 步骤7.worker进程开启多线程
-    线程池的回收？
+    done
+
 #### 步骤8.线程池的分配和处理
+    注意：所有的Kevent_Node 都要通过free_link进行回收，因为当FD_Node里面还是什么地方的Kevent_node不用的时候，都需要调用free_link->insertNode()
+    done
 
 #### 步骤9.worker进程处理业务
-
+    接收数据-done
+    
 #### 步骤10.尝试解析http报文
 
 #### 步骤11.静态服务器搭建
 
 #### 步骤12.解析图片
+
+#### 备注：
+- 进程重启，datapoll里面的数据可能会丢失掉，所以要有两种重启的方式，暴力重启和温和重启。
+

@@ -91,7 +91,9 @@ void CSocket::closesocket(){
     for(int i=0; i<fd_ports.size(); i++){
         close(fd_ports[i]->fd);
         if(fd_ports[i]->event != NULL){
-            delete fd_ports[i]->event;
+            // fd_ports[i]->event->clear();  // 所有和event先关的删除操作要先通过一部clear。
+            // delete fd_ports[i]->event;
+            free_link->insert_Node(fd_ports[i]->event);
             fd_ports[i]->event = NULL;
         }
         
@@ -137,7 +139,9 @@ bool CSocket::epoll_init_macos(){
         for(int i=0; i<er_judge; i++){
             FD_PORT*  fd_port = fd_ports[i];
             if(fd_port->event != NULL){
-                delete fd_port->event;
+                // fd_port->event->clear();  // 所有和event先关的删除操作要先通过一部clear。
+                free_link->insert_Node(fd_port->event);
+                // delete fd_port->event;
                 fd_port->event = NULL;
             }
         }
@@ -155,54 +159,6 @@ bool CSocket::epoll_init_macos(){
 }
 bool CSocket::epoll_init_linux(){
     return false;
-}
-// 存在惊群效应
-void CSocket::cia_socket_accept(Kevent_Node* kn){
-    //  accept 也是要设置为非阻塞的，且建立完一个连接就要把这个连接加入到epoll中去
-    struct sockaddr_in client_addr;
-    socklen_t len = sizeof(client_addr);
-    
-    int accept_fd = accept(kn->fd, (struct  sockaddr *)&client_addr, &len);
-
-    if(accept_fd == -1){  // 这里有多种情况
-        int err = errno;
-        if(err == EAGAIN || err == EWOULDBLOCK){ // 再试一次，不算错误
-            return; 
-        }
-        if (err == ECONNABORTED)  //ECONNRESET错误则发生在对方意外关闭套接字后【您的主机中的软件放弃了一个已建立的连接--由于超时或者其它失败而中止接连(用户插拔网线就可能有这个错误出现)】
-        {
-            //该错误被描述为“software caused connection abort”，即“软件引起的连接中止”。原因在于当服务和客户进程在完成用于 TCP 连接的“三次握手”后，
-                //客户 TCP 却发送了一个 RST （复位）分节，在服务进程看来，就在该连接已由 TCP 排队，等着服务进程调用 accept 的时候 RST 却到达了。
-                //POSIX 规定此时的 errno 值必须 ECONNABORTED。源自 Berkeley 的实现完全在内核中处理中止的连接，服务进程将永远不知道该中止的发生。
-                    //服务器进程一般可以忽略该错误，直接再次调用accept。
-            LOG_ERR(ERROR, "cia_socket_accept() 中的 accpet()出现错误errno = ECONNABORTED, 直接返回");
-        } 
-        else if (err == EMFILE || err == ENFILE) //EMFILE:进程的fd已用尽【已达到系统所允许单一进程所能打开的文件/套接字总数】。可参考：https://blog.csdn.net/sdn_prc/article/details/28661661   以及 https://bbs.csdn.net/topics/390592927
-                                                    //ulimit -n ,看看文件描述符限制,如果是1024的话，需要改大;  打开的文件句柄数过多 ,把系统的fd软限制和硬限制都抬高.
-                                                //ENFILE这个errno的存在，表明一定存在system-wide的resource limits，而不仅仅有process-specific的resource limits。按照常识，process-specific的resource limits，一定受限于system-wide的resource limits。
-        {
-            
-            LOG_ERR(ERROR, "cia_socket_accept() 中的 accpet()出现错误errno = EMFILE | ENFILE， 直接返回");
-        }
-        return; 
-    }
-    if(!setnoneblocking(accept_fd)){
-        close(accept_fd);
-        LOG_ERR(ERROR, "CSocket::cia_socket_accept() 中 setnoneblocking() 设置非阻塞失败，直接退出！");
-        return;
-    }
-    
-    int current_link =  fd_ports.size();
-    FD_PORT* fd_port = new FD_PORT(accept_fd,true, 0);
-
-    // TODO 处理连接请求发来的数据
-    if(cia_add_epoll(fd_port, fd_port->wr_flag?1:0, fd_port->wr_flag?0:1,  &CSocket::cia_wait_request_handler) == false){
-        delete fd_port;
-        return;
-    } 
-    fd_ports.push_back(fd_port);
-
-    // accept_fd 说明连接已经建立，要将该连接加入到kevent里面去
 }
 
 // 添加一个文件描述符到kqueue中去，向fd_ports中加入一个,该函数并没有加，所以要在外面加，然后申请一个free_node
@@ -238,6 +194,8 @@ bool CSocket::cia_add_epoll(FD_PORT* fd_port, int read, int write, cia_event_han
 }
 // 删除一个文件描述符时,清楚掉该fd_ports的元素，将该fd_port放回到free_link
 void CSocket::cia_del_epoll(int fd){
+    if(fd < 1) return;
+
     struct kevent kev2;
     
     auto itre = fd_ports.begin();
@@ -252,42 +210,11 @@ void CSocket::cia_del_epoll(int fd){
         
         EV_SET(&kev2, fd, (*itre)->wr_flag?EVFILT_READ:EVFILT_WRITE, EV_DELETE, NULL, 0, (*itre)->event);
         kevent(kqueue_fd, &kev2, 1, NULL, 0, NULL);
-        free_link->insert_Node((*itre)->event);
-        
+        free_link->insert_Node((*itre)->event);  // 回收连接池
+
+        (*itre)->event = NULL;
         delete (*itre);
         (*itre) = NULL;
         fd_ports.erase(itre);
     }
-}
-
-void CSocket::cia_wait_request_handler(Kevent_Node* kn){
-    
-    // LOG_ERR(INFO, "pid = %d 来了数据了来了数据了", getpid());
-    char buffer[100];
-    int n = recv(kn->fd,buffer, 100, 0);
-    if(n == 0){  // 表示客户端断开了连接
-        //断开连接
-        LOG_ERR(WARN, "断开连接");
-        cia_del_epoll(kn->fd);
-        return;
-    }
-    if(n < 0){
-        int err = errno;
-        if(err == EAGAIN || err == EWOULDBLOCK){// 不算错误
-            LOG_ERR(WARN,"收到EAGAIN");
-            return;
-        }
-        if(err == EINTR){
-            LOG_ERR(WARN, "收包被信号打断");
-            return;
-        }
-        if(err == ECONNRESET){ // 客户端强行关闭
-            LOG_ERR(WARN, "客户端强心关闭");
-        }else{
-            LOG_ERR(WARN, "打印看看出现什么错误：err=%d", err);
-        }
-        return;
-    }
-    
-    LOG_ERR(INFO, "收到数据：%s", buffer);
 }

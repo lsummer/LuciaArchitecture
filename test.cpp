@@ -88,13 +88,13 @@ struct th{
 };
 int main(int argc, char* argv[])
 {
-	thread* t1 = NULL;
-	th* ts = new th(t1);
-	cout << ts->t << endl; 
-	t1 = new thread(func);
-	t1->join();
-	ts->t = t1;
-	cout << ts->t << endl; 
+	// thread* t1 = NULL;
+	// th* ts = new th(t1);
+	// cout << ts->t << endl; 
+	// t1 = new thread(func);
+	// t1->join();
+	// ts->t = t1;
+	// cout << ts->t << endl; 
 	// #ifdef __linux__
 	// 	cout<<"linxu环境" <<endl;
 	// #elif __APPLE__
@@ -111,5 +111,15 @@ int main(int argc, char* argv[])
 	// t1.join();
 	// t2.join();
 	// t3.join();
+	char x[10];
+	char tmp[] = "I love China";
+	x[0] = 'I';
+	x[1] = 'l';
+	x[2] = '\0';
+	// x = tmp;
+	printf("%zu", strlen(x));
+	memset(x, 0, 10);
+	printf("%zu", strlen(x));
+	cout <<x <<endl;
 	return 0;
 }

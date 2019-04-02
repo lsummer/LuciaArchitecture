@@ -1,6 +1,7 @@
 #include "cia_threadpoo.h"
 #include "cia_log.h"
-
+#include "cia_operation.h"
+#include "cia_global.h"
 std::mutex CThreadPoll::cia_mutes_con;
 std::condition_variable CThreadPoll::cia_con_var;         // 线程池的条件变量
 bool CThreadPoll::shutdown = false;                          // 线程池结束标记
@@ -77,16 +78,16 @@ void CThreadPoll::stopAll(){
 void CThreadPoll::call(){
     // 获得一个线程去执行
     cia_con_var.notify_one();
-    LOG_ERR(INFO, "进程pid=%d的线程运行数量为%d", getpid());
+    LOG_ERR(INFO, "进程pid=%d的线程运行数量为%d", getpid(),cia_running_thread.load());
     if(cia_running_thread >= cia_thread_num * 0.9){
         LOG_ERR(WARN, "进程线程测试目前已经快满了");
     }
 }
 
 void CThreadPoll::thread_func(ThreadItem& item){
-    // LOG_ERR(INFO, "线程池开始执行thread_pid = %d", std::this_thread::get_id());
+    // LOG_ERR(INFO, "线程池开始执行thread_pid = %d", std::this_thread::get_id()); 
     for(;;){
-        if(shutdown == false){
+        if(shutdown == false && datapoll.empty()){
             if(item.isrunning == false){
                 item.isrunning = true;
             }
@@ -95,7 +96,7 @@ void CThreadPoll::thread_func(ThreadItem& item){
             cia_con_var.wait(ulock);
         }
         //是否执行到这里
-        LOG_ERR(INFO, "线程向下执行到这里");
+        // LOG_ERR(INFO, "线程向下执行到这里");
         // 线程向下执行才是王道
 
         if(shutdown == true){
@@ -105,11 +106,11 @@ void CThreadPoll::thread_func(ThreadItem& item){
         // 走到这里是真正开始执行
         item._this->cia_running_thread++;
         
-        LOG_ERR(INFO, "业务代码执行开始");
-        //模拟业务执行
-        sleep(10);
-        LOG_ERR(INFO, "业务代码执行结束");
-
+        Kevent_Node* knode = datapoll.outMsgQueue(); // 成功读入数据，返回指针，否则返回NULL；
+        if(knode != NULL){
+            porcMsg(knode);
+        }
+        
         item._this->cia_running_thread--;
     }
 }

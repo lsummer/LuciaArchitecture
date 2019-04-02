@@ -6,9 +6,10 @@
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/time.h>
+#include <time.h>
 #include "cia_conf.h"
 #include "cia_log.h"
-
+#include "cia_comm.h"
 #ifdef __linux__
     #include <sys/epoll.h>
 #endif
@@ -25,16 +26,20 @@ public:
     int port; // 端口号
     cia_event_handler_ptr handler;  // 回调函数
     Kevent_Node* next;
-    // char* buf;  // 资源池
-    // int status;  // 状态
-    // long last_active;  // 上次活跃时间
-    Kevent_Node():fd(0), port(0), handler(NULL), next(NULL){}
-    Kevent_Node(int fd, cia_event_handler_ptr handler):fd(fd), port(0), handler(handler), next(NULL){}
+    
+    char* buf;  // 资源池，该连接发来的数据开辟的信息
+    int status;  // 状态，数据有一定的格式; -1(PKG_UNUSE)表示连接池中的数据，0(PKG_INIT)表示已不在连接池中，1，2，3是其他的数据状态
+    long last_active;  // 上次活跃时间
+
+    Kevent_Node():fd(0), port(0), handler(NULL), next(NULL), buf(NULL), status(PKG_UNUSE){}
+    Kevent_Node(int fd, cia_event_handler_ptr handler):fd(fd), port(0), handler(handler),  buf(NULL), next(NULL),status(PKG_UNUSE){}
     void clear(){ // 清理自己的数据，以放回到free_link时数据清除工作
         fd = 0;
         port = 0;
         handler = NULL;
         next = NULL;
+        buf = NULL; //buf不能在这里删除，哪里创建哪里删除
+        status = PKG_UNUSE;
     }
 };
 
@@ -69,9 +74,16 @@ public:
 
         node_number --;
         res->next = NULL;
+
+        res->last_active = time(0);   // 活跃时间
+        res->status = PKG_INIT;  // 状态变化，表示
+
         return res;
     }
     void insert_Node(Kevent_Node* node){
+        if(node->buf != NULL){
+            delete [](node->buf);
+        }
         node->clear();
         node->next = header;
         header = node;

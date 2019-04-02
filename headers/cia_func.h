@@ -3,7 +3,7 @@
 /*
     对字符串操作的一些函数会在这里
 */
-#include "header.h"
+// #include "header.h"
 
 #define LOGS_SINGLE_MAX_CHARACTERS 500
 

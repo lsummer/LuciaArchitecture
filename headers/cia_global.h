@@ -3,6 +3,7 @@
 
 #include "cia_socket.h"
 #include "cia_threadpoo.h"
+#include "cia_datapoll.h"
 
 //外部全局量声明
 extern int g_environment; // 环境变量的长度
@@ -14,5 +15,5 @@ extern int process_type;  // 是master进程还是worker进程，master进程为
 
 extern CSocket socket_ctl; 
 extern CThreadPoll threadpoll;
-
+extern DataPoll datapoll;
 #endif
