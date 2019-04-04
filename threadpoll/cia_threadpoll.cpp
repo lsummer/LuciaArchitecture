@@ -87,7 +87,7 @@ void CThreadPoll::call(){
 void CThreadPoll::thread_func(ThreadItem& item){
     // LOG_ERR(INFO, "线程池开始执行thread_pid = %d", std::this_thread::get_id()); 
     for(;;){
-        if(shutdown == false && datapoll.empty()){
+        while(shutdown == false && datapoll.empty()){
             if(item.isrunning == false){
                 item.isrunning = true;
             }
@@ -106,7 +106,7 @@ void CThreadPoll::thread_func(ThreadItem& item){
         // 走到这里是真正开始执行
         item._this->cia_running_thread++;
         
-        Kevent_Node* knode = datapoll.outMsgQueue(); // 成功读入数据，返回指针，否则返回NULL；
+        auto knode = datapoll.outMsgQueue(); // 成功读入数据，返回指针，否则返回NULL；
         if(knode != NULL){
             porcMsg(knode);
         }

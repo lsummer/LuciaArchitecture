@@ -11,12 +11,12 @@ class DataPoll{
 public:
     DataPoll();
     ~DataPoll();
-    void inMsgQueue(Kevent_Node* s);
-    Kevent_Node* outMsgQueue();
+    void inMsgQueue(Message* s);
+    Message* outMsgQueue();
 
     bool empty();
 private:
-    std::list<Kevent_Node *> msgQueue;
+    std::list<Message *> msgQueue;
     std::mutex cia_mutex_message;
 };
 

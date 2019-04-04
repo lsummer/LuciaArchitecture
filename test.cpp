@@ -1,5 +1,8 @@
 #include <iostream>
 #include <thread>
+#include <vector>
+#include <string>
+#include <list>
 using namespace std;
 
 // mutex mutex1;
@@ -75,17 +78,19 @@ using namespace std;
 // int rangesum(int begin, int end, vector<int>& BIT){
 // 	return prefixSum(end) - prefixSum(begin-1);
 // }
+string str;
+void func(const char* x, int length){
+	str = string(x, x+length);
 
-void func(){
-	cout << "线程测试" << this_thread::get_id() << endl; 
+	// cout << "线程测试" << this_thread::get_id() << endl; 
 }
-struct th{
-	thread* t;
-	th(thread* t):t(t){
+// struct th{
+// 	thread* t;
+// 	th(thread* t):t(t){
 		
-	}
-	~th(){}
-};
+// 	}
+// 	~th(){}
+// };
 int main(int argc, char* argv[])
 {
 	// thread* t1 = NULL;
@@ -111,15 +116,21 @@ int main(int argc, char* argv[])
 	// t1.join();
 	// t2.join();
 	// t3.join();
-	char x[10];
-	char tmp[] = "I love China";
-	x[0] = 'I';
-	x[1] = 'l';
-	x[2] = '\0';
-	// x = tmp;
-	printf("%zu", strlen(x));
-	memset(x, 0, 10);
-	printf("%zu", strlen(x));
-	cout <<x <<endl;
+	// char x[] = "12345";
+	// int len = 6;
+	// func(x, len);
+	// cout << str << endl;
+	list<int*> x;
+	int* m = new int(1);
+	int* q = new int(2);
+	int* p = new int(3);
+	x.push_back(m);
+	x.push_back(q);
+	x.push_back(p);
+
+	x.pop_front();
+	cout << (*m) <<endl;
+	cout << &x <<endl;
+	
 	return 0;
 }

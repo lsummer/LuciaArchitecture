@@ -4,15 +4,15 @@
 
 DataPoll::DataPoll(){}
 DataPoll::~DataPoll(){}
-void DataPoll::inMsgQueue(Kevent_Node* s){
+void DataPoll::inMsgQueue(Message* s){
     {
         std::lock_guard<std::mutex> sbguard(cia_mutex_message);
         msgQueue.push_back(s);
     }
     // LOG_ACC(INFO, "收到数据包：%s", s);
 }
-Kevent_Node* DataPoll::outMsgQueue(){
-    Kevent_Node* buffer = NULL;
+Message* DataPoll::outMsgQueue(){
+    Message* buffer = NULL;
     {
         std::lock_guard<std::mutex> sbguard(cia_mutex_message);
         if(msgQueue.empty()) return NULL;

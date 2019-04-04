@@ -5,6 +5,7 @@
 #include "cia_socket.h"
 
 // 处理消息
-void porcMsg(Kevent_Node* knode);
+void porcMsg(Message* knode);
 
+void httpHeaderProc();
 #endif //__HEADERS_CIA_OPERATION_H__
