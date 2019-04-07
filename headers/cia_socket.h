@@ -22,12 +22,14 @@ typedef class  CSocket           CSocket;
 
 typedef void (CSocket::*cia_event_handler_ptr)(Kevent_Node* kn); //定义成员函数指针
 
-class Kevent_Node{
+class Kevent_Node{  // 有两种，一种是request，另一种是response，所以如何设置这两种不同的类别
 public: 
     int fd;  // 描述符
     int port; // 端口号
     cia_event_handler_ptr handler;  // 回调函数
     Kevent_Node* next;
+
+    Response* c_response;  
     
     // char* buf;  // 资源池，该连接发来的数据开辟的信息
     // int status;  // 状态，数据有一定的格式; -1(PKG_UNUSE)表示连接池中的数据，0(PKG_INIT)表示已不在连接池中，1，2，3是其他的数据状态
@@ -35,8 +37,9 @@ public:
 
     // http_parser parser;  // 表示这个要初始化
     CParser* c_message;  //在哪里创建，在哪里删除
+    
 
-    Kevent_Node():fd(0), port(0), handler(NULL), next(NULL){
+    Kevent_Node():fd(0), port(0), handler(NULL), next(NULL), c_response(NULL){
         // http_parser_init(&parser, HTTP_REQUEST);
         c_message = new CParser();
         if(c_message == NULL){
@@ -44,7 +47,7 @@ public:
             exit(-2);
         }
     }
-    Kevent_Node(int fd, cia_event_handler_ptr handler):fd(fd), port(0), handler(handler), next(NULL), c_message(NULL){
+    Kevent_Node(int fd, cia_event_handler_ptr handler):fd(fd), port(0), handler(handler), next(NULL), c_message(NULL), c_response(NULL){
         // http_parser_init(&parser, HTTP_REQUEST);
         c_message = new CParser();
         if(c_message == NULL){
@@ -62,6 +65,7 @@ public:
         handler = NULL;
         next = NULL;
         c_message->restore();  // 目的是清楚数据
+        c_response = NULL;
         // status = PKG_UNUSE;
         // http_parser_init(&parser, HTTP_REQUEST);
     }
@@ -141,13 +145,19 @@ public:
     bool epoll_init_macos();  // 创建epoll ；主要三个函数 epoll_create(), epoll_ctl() 和 epoll_wait(); 这里使用epoll_create();
     void cia_socket_accept(Kevent_Node* kn);
 
-    bool cia_add_epoll(FD_PORT* fd_port, int read, int write, cia_event_handler_ptr handler);
-    void cia_del_epoll(int fd);
+    bool cia_add_epoll(FD_PORT* fd_port, int read, int write, cia_event_handler_ptr handler, Response* response=NULL);
+    void cia_del_epoll(int fd, bool wr_flag);
 
     void cia_epoll_process_events(const struct timespec *timeout = NULL);
     void cia_wait_request_handler(Kevent_Node* kn);  // 处理发来的请求de回调函数
+    void cia_wait_responese_handler(Kevent_Node* kn); // 回复请求的回调函数
 
 
+    int sendProc(Response* res);
+    void sendResponse(Response* res);    // 发送请求
+
+
+    void porcRequest(Message* message);  // 处理request
 private:
     // 三件套，当多了一个需要处理的文件描述符时，需要将一个对应的FD_PORT添加到fd_ports中去，current_link需要+1，free_link需要getNode()一次
     // 当关闭一个文件描述符时， 需要删除一个fd_ports

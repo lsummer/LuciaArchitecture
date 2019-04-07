@@ -11,13 +11,24 @@ class DataPoll{
 public:
     DataPoll();
     ~DataPoll();
+    // 请求消息的队列
     void inMsgQueue(Message* s);
     Message* outMsgQueue();
-
     bool empty();
+
+    // 响应消息的队列
+    void inResQueue(Response* s);
+    Response* outResQueue();
+    bool resEmpty();
+
 private:
-    std::list<Message *> msgQueue;
-    std::mutex cia_mutex_message;
+    //  请求消息的队列
+    std::list<Message *> requestQueue;
+    std::mutex cia_mutex_message;  // 用的互斥量
+
+    // 响应消息的队列
+    std::list<Response *> responseQueue;
+    std::mutex cia_mutex_response;  
 };
 
 #endif 

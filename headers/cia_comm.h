@@ -12,6 +12,8 @@
 
 #define MAX_ELEMENT_SIZE 2048
 #define MAX_HEADERS 13
+
+// request;
 class Message {  // 目前message只是处理了request的数据，reponse的数据需要额外处理，需要的时候另说
     public:
     Message():message_begin_cb_called(false),headers_complete_cb_called(false),message_complete_cb_called(false){}
@@ -39,5 +41,29 @@ class Message {  // 目前message只是处理了request的数据，reponse的数
     bool message_begin_cb_called;
     bool headers_complete_cb_called;
     bool message_complete_cb_called;
+};
+
+class Response{
+    public:
+    ~Response(){
+        if(msg != NULL) delete []msg;
+        clear();
+    }
+    Response():msg(NULL), begin(NULL), left_len(-1), send_count(0){
+    }
+    Response(char* s, size_t length):msg(s), begin(s), left_len(length), send_count(0){
+    }
+    void clear(){
+        send_count = 0;
+        msg = NULL;
+        begin = NULL;
+        left_len = -1;
+        fd = 0;
+    }
+    char* msg;  // 指向response，可能需要构造一下response的结构，之后再议
+    char* begin;
+    size_t left_len;
+    std::atomic<int> send_count;
+    int fd; // 发送到文件描述符fd处去
 };
 #endif

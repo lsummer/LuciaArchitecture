@@ -5,7 +5,7 @@
 #include "cia_socket.h"
 
 // 处理消息
-void porcMsg(Message* knode);
+// void porcRequest(Message* knode);
+// void sendResponse(Response* msg);
 
-void httpHeaderProc();
 #endif //__HEADERS_CIA_OPERATION_H__

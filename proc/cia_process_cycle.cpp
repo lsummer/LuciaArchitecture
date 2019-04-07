@@ -38,9 +38,9 @@ void worker_process_init(int i){
 
     LOG_ERR(WARN, "子进程 pid=%d 创建成功", getpid());
    
-    int thread_number = CConfig::getInstance()->GetIntDefault("Thread_number");
-
-    if(threadpoll.create(thread_number) == false){
+    int thread_request_number = CConfig::getInstance()->GetIntDefault("Thread_number");
+    int thread_response_number = 1;
+    if(threadpoll.init(thread_request_number, thread_response_number) == false){
         exit(-2);
     }
     sleep(1);  // 等等线程的创建，等1秒

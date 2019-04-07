@@ -36,7 +36,7 @@
 
 #### 步骤9.worker进程处理业务
     接收数据-done
-    
+    发送数据-done
 #### 步骤10.解析http报文
     使用[http-parser](https://github.com/nodejs/http-parser)：
     http://www.voidcn.com/article/p-kbvcufwq-tt.html

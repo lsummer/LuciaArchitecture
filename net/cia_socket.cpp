@@ -162,17 +162,20 @@ bool CSocket::epoll_init_linux(){
 }
 
 // 添加一个文件描述符到kqueue中去，向fd_ports中加入一个,该函数并没有加，所以要在外面加，然后申请一个free_node
+// 参考accept，一定要在fd_ports中加入一条
 // read 表示读描述符，write表示写描述符，handler为回调函数
-bool CSocket::cia_add_epoll(FD_PORT* fd_port, int read, int write, cia_event_handler_ptr handler){
+bool CSocket::cia_add_epoll(FD_PORT* fd_port, int read, int write, cia_event_handler_ptr handler, Response* response){
     Kevent_Node* kevent_node = free_link->get_Node();
     if(kevent_node == NULL){
         return false;
     }
+
     // fd_ports.push_back(fd_port);
 
     kevent_node->fd = fd_port->fd;
     kevent_node->port = fd_port->port;
     kevent_node->handler = handler; // 应该为处理连接的函数
+    kevent_node->c_response = response;
     
     fd_port->event = kevent_node;
 
@@ -193,14 +196,14 @@ bool CSocket::cia_add_epoll(FD_PORT* fd_port, int read, int write, cia_event_han
     return true;
 }
 // 删除一个文件描述符时,清楚掉该fd_ports的元素，将该fd_port放回到free_link
-void CSocket::cia_del_epoll(int fd){
+void CSocket::cia_del_epoll(int fd, bool wr_flag){
     if(fd < 1) return;
 
     struct kevent kev2;
     
     auto itre = fd_ports.begin();
     for(; itre != fd_ports.end(); itre++){
-        if((*itre)->fd == fd){
+        if((*itre)->fd == fd && (*itre)->wr_flag == wr_flag){
             break;
         }
     }
