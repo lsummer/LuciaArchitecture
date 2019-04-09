@@ -1,11 +1,14 @@
 
 #include <thread>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <algorithm>
 #include <iostream>
 #include "cia_socket.h"
 #include "cia_comm.h"
 #include "cia_global.h"
+#include "cia_response_header.h"
 
 int CSocket::sendProc(Response* res){
     int n;
@@ -96,24 +99,45 @@ void CSocket::sendResponse(Response* res){
 // recv
 void CSocket::porcRequest(Message* message){
     LOG_ACC(INFO,"线程threadid = %d 开始处理消息",std::this_thread::get_id());
-    LOG_ACC(INFO,"------- 消息开始 ---------");
-    // char buf[11] = "Received!";
-    // int n = send(knode->fd, buf, strlen(buf), 0);
-    LOG_ACC(INFO, "URL: %s", (message->url).c_str());
-    LOG_ACC(INFO, "Headers: ");
-    for(auto itre = (message->headers).begin(); itre != (message->headers).end(); itre++){
-        LOG_ACC(INFO, "%s:  %s", ((*itre)[0]).c_str(), ((*itre)[1]).c_str());
-    }
-    LOG_ACC(INFO,"------- 消息结束 ---------");
-    // sleep(5);
-    LOG_ACC(INFO,"线程threadid = %d 结束处理消息",std::this_thread::get_id());
+    // LOG_ACC(INFO,"------- 消息开始 ---------");
+    // // char buf[11] = "Received!";
+    // // int n = send(knode->fd, buf, strlen(buf), 0);
+    // LOG_ACC(INFO, "URL: %s", (message->url).c_str());
+    // LOG_ACC(INFO, "Headers: ");
+    
+
+    std::string path = CConfig::getInstance()->getPath(message->url); //getPath() 得到 静态资源地址
+
+    int method = message->method;  //GET or POST or OTHERS
+
+
+
+    // for(auto itre = (message->headers).begin(); itre != (message->headers).end(); itre++){
+    //     LOG_ACC(INFO, "%s:  %s", ((*itre)[0]).c_str(), ((*itre)[1]).c_str());
+    // }
+    // LOG_ACC(INFO,"------- 消息结束 ---------");
+    // // sleep(5);
+    // LOG_ACC(INFO,"线程threadid = %d 结束处理消息",std::this_thread::get_id());
 
     int fd = message->fd;
     delete message;
 
     // 发送数据
+    /*
+    std::string code;
+    std::string code_ds;
+    std::string Content_Type;
+    std::string Content_Length;// 需要文件相关
+    std::string Last_Modified; // 需要文件相关
+    std::string Connection;
+    */
+    Cia_Response_Header header;
+    header.code = "200";
+    header.code_ds = "OK";
+    header.Content_Type = "text/html;charset=utf-8";
+    header.Connection = "Keep-Alive";
 
-
+    
     char value[] = "HTTP/1.1 404 Not Found\r\n"
          "Date: Sat, 31 Dec 2005 23:59:59 GMT\r\n"
          "Server: Lucia/0.0.1 (Unix) PHP/5.05\r\n"

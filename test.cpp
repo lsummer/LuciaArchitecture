@@ -3,6 +3,11 @@
 #include <vector>
 #include <string>
 #include <list>
+#include <time.h>
+#include <stdio.h>
+#include<cstring>
+#include <string.h>
+#include <regex>
 using namespace std;
 
 // mutex mutex1;
@@ -91,6 +96,30 @@ void func(const char* x, int length){
 // 	}
 // 	~th(){}
 // };
+std::string GetGmtTime()
+{
+	char szGmtTime[50];
+	
+	time_t rawTime;
+	struct tm* timeInfo;
+	char szTemp[30]={0};
+	time(&rawTime);
+	timeInfo = gmtime(&rawTime);
+	strftime(szTemp,sizeof(szTemp),"%a, %d %b %Y %H:%M:%S GMT",timeInfo);
+	strcpy(szGmtTime, szTemp);//必须这样，避免内存释放，内容没有的问题。 
+	// strncpy_s(szGmtTime, sizeof(szGmtTime), szTemp, strlen(szGmtTime)+1);
+	string time_str(szGmtTime, strlen(szGmtTime));
+	return time_str;
+}
+std::string GetGmtTime(const time_t* rawTime){
+	struct tm* timeInfo;
+	char szTemp[30]={0};
+	timeInfo = gmtime(rawTime);
+	strftime(szTemp,sizeof(szTemp),"%a, %d %b %Y %H:%M:%S GMT",timeInfo);
+
+	string time_str(szTemp, strlen(szTemp)+1);
+	return time_str;
+}
 int main(int argc, char* argv[])
 {
 	// thread* t1 = NULL;
@@ -120,17 +149,27 @@ int main(int argc, char* argv[])
 	// int len = 6;
 	// func(x, len);
 	// cout << str << endl;
-	list<int*> x;
-	int* m = new int(1);
-	int* q = new int(2);
-	int* p = new int(3);
-	x.push_back(m);
-	x.push_back(q);
-	x.push_back(p);
+	// list<int*> x;
+	// int* m = new int(1);
+	// int* q = new int(2);
+	// int* p = new int(3);
+	// x.push_back(m);
+	// x.push_back(q);
+	// x.push_back(p);
 
-	x.pop_front();
-	cout << (*m) <<endl;
-	cout << &x <<endl;
-	
+	// x.pop_front();
+	// cout << (*m) <<endl;
+	// cout << &x <<endl;
+	// cout << GetGmtTime() << endl;
+	// time_t rawTime;
+	// time(&rawTime);
+	// cout << GetGmtTime(&rawTime) << endl;
+	string str("\\.(js|css|png|ico|jpg|jpeg|gif|html|json|eot|svg|ttf|woff|txt|gz|mp3|mp4)$");
+	std::regex txt_regex(str, std::regex::icase);
+	std::string fname = "servei.js.xx";
+	if(std::regex_search(fname, txt_regex)){
+		cout << "TTrue" << endl;
+	}
 	return 0;
+
 }

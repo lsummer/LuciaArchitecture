@@ -1,5 +1,6 @@
 /*
-    对字符串操作的一些函数会在这里
+    字符串操作的一些函数
+    时间格式转换的一些函数
 */
 
 #include "header.h"
@@ -50,4 +51,15 @@ int args_printf(std::string& result, const char* fmt, va_list args){
     delete []ch_res;
     ch_res = NULL;
     return size;
+}
+
+// ------------ 将时间转换成GMT格式 ----------------
+std::string GetGmtTime(const time_t* rawtime){
+    struct tm* timeInfo;
+    char szTemp[30]={0};
+    timeInfo = gmtime(rawTime);
+    strftime(szTemp,sizeof(szTemp),"%a, %d %b %Y %H:%M:%S GMT",timeInfo);
+
+    string time_str(szTemp, strlen(szTemp)+1);
+    return time_str;
 }

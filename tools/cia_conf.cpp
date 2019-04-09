@@ -1,6 +1,7 @@
 #ifndef __TOOLS_CIA_CONF_CPP__
 #define __TOOLS_CIA_CONF_CPP__
 
+#include <regex>  // https://zh.cppreference.com/w/cpp/regex/regex_match
 #include "header.h"
 #include "cia_conf.h"
 #include "cia_func.h"
@@ -43,8 +44,19 @@ bool CConfig::load(const std::string& filename){
                 
                 // 判断是否是空格，判断是否是注释行
                 if(line.length() <= 0) continue;
-                if(line[0] == '#' || line[0] == '[' || line[0] == '\t' || line[0] == '\n') continue;
+                if(line[0] == '#' || line[0] == '[' || line[0] == '\t' || line[0] == '\n' || line[0] == '{' || line[0] == '}') continue;
+                
+                // 判断location， 静态资源映射
+                if(line.length() > 8 && line.substr(0, 8) == "location"){
+                    if(ParseLocation(line)){
+                        continue;
+                    }else{
+                        file.close();
+                        return false;
+                    }
+                }
 
+                // 判断等号赋值
                 std::string::size_type index = line.find_first_of("=");
                 if(index != std::string::npos){
                     
@@ -55,13 +67,8 @@ bool CConfig::load(const std::string& filename){
                     LRtrim(iteamname);
                     LRtrim(iteamvalue);
 
-
                     if(iteamname.length() > 0 && iteamvalue.length() > 0){
-                        // LPConfItem lpconfitem = new ConfItem();
-                        // lpconfitem->iteamName = iteamname;
-                        // lpconfitem->iteamValue = iteamvalue;
                         conf_item_vector[iteamname] = iteamvalue;
-                        // conf_item_vector.push_back(lpconfitem);
                     }
                 }
             }
@@ -77,11 +84,7 @@ std::string CConfig::GetString(const std::string& s){
     if(conf_item_vector.find(s) != conf_item_vector.end()){
         return conf_item_vector[s];
     }
-    // for(auto itre = conf_item_vector.begin(); itre != conf_item_vector.end(); itre++){
-    //     if((*itre)->iteamName == s){
-    //         return (*itre)->iteamValue;
-    //     }
-    // }
+    
     return "";
 }
 
@@ -93,4 +96,89 @@ int CConfig::GetIntDefault(const std::string& s){
     return std::stoi(res);
 }
 
+bool CConfig::ParseLocation(const std::string& str){
+    int begin = 0;
+    std::vector<std::string> vec;
+    bool flag = true;
+    for(int i=0; i<str.length(); i++){
+        if(str[i] == ' ' && flag){
+            vec.push_back(str.substr(begin, i-begin));
+            flag = false;
+        }else if(str[i] != ' ' && !flag){
+            begin = i;
+            flag = true;
+        }
+    }
+    if(flag){
+        vec.push_back(str.substr(begin, str.length()-begin));
+    }
+    CTriple ctriple;
+
+    switch (vec[1])
+    {   
+        case "~*":
+            /* code */
+            if(vec.size() != 4){
+                return false;
+            }
+            ctriple.rule = RE;
+            ctriple.pattern = vec[2];
+            ctriple.path = vec[3];
+            break;
+        case "=":
+            if(vec.size() != 4){
+                return false;
+            }
+            ctriple.rule = EQ;
+            ctriple.pattern = vec[2];
+            ctriple.path = vec[3];
+            break;
+        case "/":
+            if(vec.size() != 3){
+                return false;
+            }
+            ctriple.rule = OT;
+            // ctriple.pattern = vec[2];
+            ctriple.path = vec[3];
+            break;
+        default:
+            return false;
+    }
+    static_map.push_back(ctriple);
+    
+    return true;
+}
+
+
+std::string GetPath(const std::string& s){
+    auto itre = static_map.begin();
+    for( ; itre != static_map.end(); itre++){
+        if(match(s, (*itre)){
+            break;
+        }
+    }
+    return itre->path + s;
+}
+
+bool match(const string& s, const CTriple& triple){
+    switch (triple.rule)
+    {
+        case RE:
+            /* code */
+            std::regex txt_regex(triple.pattern, std::regex::icase);
+            
+            return std::regex_search(s, txt_regex);
+            break;
+
+        case EQ:
+            /* code */
+            if(s == triple.pattern) return true;
+            else return false;
+            break;
+
+        default:  // OT
+            return true;
+            break;
+    }
+}
 #endif

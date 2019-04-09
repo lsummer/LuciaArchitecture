@@ -1,7 +1,8 @@
 #ifndef __HEADERS_CIA_FUNC_H__
 #define __HEADERS_CIA_FUNC_H__
 /*
-    对字符串操作的一些函数会在这里
+    对字符串操作的一些函数
+    对时间操作的一些函数
 */
 // #include "header.h"
 
@@ -21,6 +22,9 @@ void EraseAnnoation(std::string& s);  // 去掉‘#’代表的注释
 // ------------ 可变参数拼接操作 ------------------
 int args_printf(std::string& result, const char* fmt, va_list args);
 
-
+// ------------ 时间转换成GMT格式 -----------------
+    // time_t rawTime; 
+    // time(&rawTime);
+std::string GetGmtTime(const time_t* rawtime);
 
 #endif

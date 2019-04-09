@@ -4,8 +4,6 @@
 #define DATA_LEN 20
 static size_t MAX_IOSTREAM_ELEMENT = 2000;
 void CSocket::cia_wait_request_handler(Kevent_Node* kn){
-    
-    
     // LOG_ERR(INFO, "pid = %d 来了数据了来了数据了", getpid());
     char buffer[MAX_IOSTREAM_ELEMENT];
     memset(buffer, 0, MAX_IOSTREAM_ELEMENT);
@@ -53,6 +51,5 @@ void CSocket::cia_wait_request_handler(Kevent_Node* kn){
         me->fd = kn->fd;
         
         datapoll.inMsgQueue(me);
-        
     }
 }

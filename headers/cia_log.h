@@ -53,14 +53,18 @@ class CClog{
 private:
     CClog();
     // CClog(const std::string& configname);
-    ~CClog();
+    
     void init();
-    void cleanup();
+    
 public:
+    void cleanup();
+    ~CClog();
+
     static CClog& getLog();
 
     void access_log(int priority, const char* info, ...);
     void error_log(int priority, const char* info, ...);
+
 private:
     log4cpp::Category* access;   // 该文件表示业务的日志文件
     log4cpp::Category* error;    // 该文件表示系统的加载运行文件

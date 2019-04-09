@@ -52,7 +52,7 @@
 #### 步骤11.静态服务器搭建
     - HTTP REQUEST中的GET解析，请求具体的html文件，参考nginx的配置
     - lucia.conf 的解析需要更进一步的处理
-    
+
 #### 步骤12.解析图片
 
 #### 备注：
@@ -61,3 +61,8 @@
 - 进程重启，datapoll里面的数据可能会丢失掉，所以要有两种重启的方式，暴力重启和温和重启。
 - 惊群效应
 - 线程资源池的回收再利用需要延迟吗？需要考虑一下
+
+注意：
+- log4cpp 存在内存泄漏
+- 内存泄漏验证方式：
+    - valgrind --tool=memcheck --leak-check=summary --trace-children=yes --show-reachable=yes ./lucia
