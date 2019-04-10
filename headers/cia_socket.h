@@ -29,7 +29,7 @@ public:
     cia_event_handler_ptr handler;  // 回调函数
     Kevent_Node* next;
 
-    Response* c_response;  
+    Response* c_response;  // 这里并没有删除c_response
     
     // char* buf;  // 资源池，该连接发来的数据开辟的信息
     // int status;  // 状态，数据有一定的格式; -1(PKG_UNUSE)表示连接池中的数据，0(PKG_INIT)表示已不在连接池中，1，2，3是其他的数据状态
@@ -152,11 +152,8 @@ public:
     void cia_wait_request_handler(Kevent_Node* kn);  // 处理发来的请求de回调函数
     void cia_wait_responese_handler(Kevent_Node* kn); // 回复请求的回调函数
 
-
-    int sendProc(Response* res);
+    
     void sendResponse(Response* res);    // 发送请求
-
-
     void porcRequest(Message* message);  // 处理request
 private:
     // 三件套，当多了一个需要处理的文件描述符时，需要将一个对应的FD_PORT添加到fd_ports中去，current_link需要+1，free_link需要getNode()一次
@@ -168,6 +165,13 @@ private:
     int kqueue_fd;  // 建立起的kqueuq的文件描述符
     // struct kevent* kevents;  // 希望后续不会因为多线程的问题而导致出现问题
     int work_connection;   // epoll支持的最大连接数量，
+
+    // ---- 为sendResponse服务的函数 -------
+    int sendBuf(Response* res);
+    int sendFile(Response* res);
+    int sendProc(Response* res);
+    void closeFile(Response* res, int fd);
+    // ------------------------------------
 };
 
 #endif

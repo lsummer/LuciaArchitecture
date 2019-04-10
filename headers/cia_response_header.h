@@ -21,7 +21,7 @@
 class Cia_Response_Header{
 public:
 
-    virtual std::string getHeader(){  // 可以优化避免copy
+    std::string getHeader(){  // 可以优化避免copy
         std::string result;
         time_t rawTime; 
         time(&rawTime);
@@ -30,15 +30,13 @@ public:
         result += ("Server: Lucia/0.0.1 (Unix)\r\n");
         result += ("Date: " +  GetGmtTime(&rawTime) + "\r\n");
         result += ("Content-Type: " + Content_Type  + "\r\n");
-        result += ("Last-Modified: " + Last_Modified  + "\r\n");
-        result += ("Connection: " + Connection  + "\r\n");
+        if(Last_Modified.length() > 0) result += ("Last-Modified: " + Last_Modified  + "\r\n");
+        if(Connection.length() > 0) result += ("Connection: " + Connection  + "\r\n");
         result += ("Accept-Ranges: none\r\n");
         result += "\r\n";
-
         return result;
     }
 
-private:
     // std::string HTTP_Version;  //==HTTP/1.1
     std::string code;
     std::string code_ds;

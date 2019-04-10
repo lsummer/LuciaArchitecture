@@ -8,6 +8,10 @@
 #include<cstring>
 #include <string.h>
 #include <regex>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
 using namespace std;
 
 // mutex mutex1;
@@ -96,21 +100,21 @@ void func(const char* x, int length){
 // 	}
 // 	~th(){}
 // };
-std::string GetGmtTime()
-{
-	char szGmtTime[50];
+// std::string GetGmtTime()
+// {
+// 	char szGmtTime[50];
 	
-	time_t rawTime;
-	struct tm* timeInfo;
-	char szTemp[30]={0};
-	time(&rawTime);
-	timeInfo = gmtime(&rawTime);
-	strftime(szTemp,sizeof(szTemp),"%a, %d %b %Y %H:%M:%S GMT",timeInfo);
-	strcpy(szGmtTime, szTemp);//必须这样，避免内存释放，内容没有的问题。 
-	// strncpy_s(szGmtTime, sizeof(szGmtTime), szTemp, strlen(szGmtTime)+1);
-	string time_str(szGmtTime, strlen(szGmtTime));
-	return time_str;
-}
+// 	time_t rawTime;
+// 	struct tm* timeInfo;
+// 	char szTemp[30]={0};
+// 	time(&rawTime);
+// 	timeInfo = gmtime(&rawTime);
+// 	strftime(szTemp,sizeof(szTemp),"%a, %d %b %Y %H:%M:%S GMT",timeInfo);
+// 	strcpy(szGmtTime, szTemp);//必须这样，避免内存释放，内容没有的问题。 
+// 	// strncpy_s(szGmtTime, sizeof(szGmtTime), szTemp, strlen(szGmtTime)+1);
+// 	string time_str(szGmtTime, strlen(szGmtTime));
+// 	return time_str;
+// }
 std::string GetGmtTime(const time_t* rawTime){
 	struct tm* timeInfo;
 	char szTemp[30]={0};
@@ -164,12 +168,29 @@ int main(int argc, char* argv[])
 	// time_t rawTime;
 	// time(&rawTime);
 	// cout << GetGmtTime(&rawTime) << endl;
-	string str("\\.(js|css|png|ico|jpg|jpeg|gif|html|json|eot|svg|ttf|woff|txt|gz|mp3|mp4)$");
-	std::regex txt_regex(str, std::regex::icase);
-	std::string fname = "servei.js.xx";
-	if(std::regex_search(fname, txt_regex)){
-		cout << "TTrue" << endl;
-	}
+
+
+	// string str("\\.(js|css|png|ico|jpg|jpeg|gif|html|json|eot|svg|ttf|woff|txt|gz|mp3|mp4)$");
+	// std::regex txt_regex(str, std::regex::icase);
+	// std::string fname = "/Users/lxy/Desktop/404.html";
+	// if(std::regex_search(fname, txt_regex)){
+	// 	struct stat buf;
+	// 	int st = stat(fname.c_str(), &buf);
+	// 	int fd = open(fname.c_str(), O_RDONLY);
+	// 	char x[2048];
+	// 	cout << read(fd, x, 2048) <<endl;
+		
+	// 	cout << read(fd,x,2048) << endl;
+	// 	close(fd);
+	// 	cout << GetGmtTime(&(buf.st_mtime)) << endl;
+	// }
+
+	std::string value = "header.getHeader()";
+    char* buf = new char[value.length()+2];
+
+    strcpy(buf, value.c_str()); 
+	printf("%s\n%lu", buf, strlen(buf));
+
 	return 0;
 
 }

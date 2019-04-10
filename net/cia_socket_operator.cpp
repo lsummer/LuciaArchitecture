@@ -4,13 +4,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <algorithm>
+#include <unistd.h>
 #include <iostream>
 #include "cia_socket.h"
 #include "cia_comm.h"
 #include "cia_global.h"
 #include "cia_response_header.h"
 
-int CSocket::sendProc(Response* res){
+int CSocket::sendBuf(Response* res){
     int n;
     for(;;){
         n = send(res->fd, res->begin, res->left_len, 0);
@@ -35,21 +36,153 @@ int CSocket::sendProc(Response* res){
         }
     }
 }
+// 关闭fd文件，并将其从res中取出
+void CSocket::closeFile(Response* res, int fd){
+    if(fd <= 0) return;
+
+    if(close(fd) == -1){
+        LOG_ACC(ERROR, "CSocket::sendFile()函数在关闭文件时出现错误");
+    }else{
+         LOG_ACC(ERROR, "CSocket::sendFile()函数在关闭文件成功");
+    }
+    res->file_list.pop_front();
+}
+// 返回值：n
+// n > 0 表示成功发送多少数据；
+// n == 0 表示客户端关闭连接
+// n == -1 表示EAGAIN或者EWOULDBLOCK，发送缓冲区满，等会再试
+// n == -2 表示发送出现错误
+// n == -3 表示上一个文件发送完成了，继续发送下一个文件
+int CSocket::sendFile(Response* res){
+    int fn;
+    int NBYTES = 1024;
+    char* buf = new char[NBYTES];  // delete []buf;
+    for(;;){
+        int file = (res->file_list).front();
+        fn = read(file, buf, NBYTES);
+        if(fn == 0){
+            //表示该文件已经读取到末尾，无需再继续读取了;close文件, 并弹出
+            delete []buf;
+            closeFile(res, file);
+            return -3; // 表示该文件已经发送完毕了，通知sendProc处理下一个文件
+        }else if(fn == -1){ // read文件可能出现的错误
+            int err = errno;
+            delete []buf;
+            switch (err)
+            {
+                case EINTR:
+                    //被信号打断，不用管，继续，因为会走for循环，重新读取
+                    break;
+                case EAGAIN: 
+                    // 当前没有数据可读，等会再试
+                    return -1;
+                    break;
+                case EIO:
+                    LOG_ACC(ERROR, "CSocket::sendFile()函数read文件时遇到EIO错误");
+                    closeFile(res, file);
+                    return -2;
+                    break;
+                case EISDIR:
+                    LOG_ACC(ERROR, "CSocket::sendFile()函数read文件时遇到EISDIR错误,读取的文件是一个目录");
+                    closeFile(res, file);
+                    return -2;
+                    break;
+                case EBADF:
+                    LOG_ACC(ERROR, "CSocket::sendFile()函数read文件时遇到EBADF错误,读取的文件不是一个合法文件");
+                    closeFile(res, file);
+                    return -2;
+                    break;
+                case EINVAL:
+                    LOG_ACC(ERROR, "CSocket::sendFile()函数read文件时遇到EINVAL错误,文件不可读");
+                    closeFile(res, file);
+                    return -2;
+                    break;
+                default:
+                    LOG_ACC(ERROR, "CSocket::sendFile()函数read文件时遇到未知错误：errno=%d,读取文件出错", err);
+                    closeFile(res, file);
+                    return -2;
+                    break;
+            }
+        }else{
+            res->msg = buf;
+            res->begin = buf;
+            res->left_len = fn;
+            return sendBuf(res);
+        }
+    }
+}
+// 返回值：n
+// n > 0 表示成功发送多少数据；
+// n == 0 表示客户端关闭连接
+// n == -1 表示EAGAIN或者EWOULDBLOCK，发送缓冲区满，等会再试
+// n == -2 表示发送出现错误
+// n == -3 表示文件已经全部发送完了, 发送结束
+int CSocket::sendProc(Response* res){
+    int n;
+    for(;;){
+        // 判断是否发送完成缓冲区文件
+        if(!res->msg_finished){
+            return sendBuf(res);
+        }else{
+            if(res->file_list.empty()){
+                return -3;
+            }
+            n = sendFile(res);
+            if(n == -3){
+                continue;
+            }
+            return n;
+        }     
+    }
+}
 
 // 和recv是对应着的
 // 返回值 >0表示发送对应大小的数据， 0表示客户端断开， -1 表示缓冲区满， -2表示出错;当收到返回值>0和-1时需要考虑加入到epoll写中，此外-2表示出错，0表示断开连接，析构；
 void CSocket::sendResponse(Response* res){
-    int n = sendProc(res);
     LOG_ACC(INFO, "------发送数据-------");
-    LOG_ACC(INFO, "%s", res->begin);
-    // char* msg;  // 指向response，可能需要构造一下response的结构，之后再议
-    // char* begin;
-    // size_t left_len;
-    // std::atomic<int> send_count;
-    // int fd; // 发送到文件描述符fd处去
-
-    if(n > 0){  
-        if(n >= res->left_len ){ // 发送成功
+    for(;;){
+        int n = sendProc(res);
+        LOG_ACC(INFO, "%s", res->begin);
+        if(n > 0){
+            if(n >= res->left_len){ //msg中的数据发完了
+                res->msg_finished = true;
+                delete [](res->msg);
+                res->msg = NULL;
+                res->begin = NULL;
+                res->left_len = -1;
+                continue;
+            }else{
+                res->left_len -= n;
+                res->begin += n;
+                if(res->send_count == 0){
+                    LOG_ACC(INFO, "----尚未发送完整， 放到epoll中去-----");
+                    // 加入到epoll中去
+                    // add epolll
+                    FD_PORT* fd_port = new FD_PORT(res->fd, false, 0);
+                    if(cia_add_epoll(fd_port, fd_port->wr_flag?1:0, fd_port->wr_flag?0:1,  &CSocket::cia_wait_responese_handler, res) == false){
+                        delete fd_port;
+                        LOG_ACC(ERROR, "CSocket::sendResponse() 中向epoll中添加节点时出错[n>0]");
+                        return;
+                    } 
+                    fd_ports.push_back(fd_port);
+                }
+                ++res->send_count;
+            }
+        }else if(n == -1){
+            if(res->send_count == 0){
+                LOG_ACC(INFO, "----尚未发送完整， 放到epoll中去-----");
+                // 加入到epoll中去
+                // add epoll
+                FD_PORT* fd_port = new FD_PORT(res->fd, false, 0);
+                if(cia_add_epoll(fd_port, fd_port->wr_flag?1:0, fd_port->wr_flag?0:1,  &CSocket::cia_wait_responese_handler, res) == false){
+                    delete fd_port;
+                    LOG_ACC(ERROR, "CSocket::sendResponse() 中向epoll中添加节点时出错[n==-1]");
+                    return;
+                } 
+                fd_ports.push_back(fd_port);
+            }
+            ++res->send_count;
+        }else if(n == -3){
             if(res->send_count > 0){     // 表示加入到epoll中去了，要删掉
                 // delete from epoll;
                 cia_del_epoll(res->fd, false);
@@ -57,42 +190,12 @@ void CSocket::sendResponse(Response* res){
             LOG_ACC(INFO, "------发送完成------");
             delete res;
         }else{
-            res->left_len -= n;
-            res->begin += n;
-            if(res->send_count == 0){
-                LOG_ACC(INFO, "----尚未发送完整， 放到epoll中去-----");
-                // 加入到epoll中去
-                // add epolll
-                FD_PORT* fd_port = new FD_PORT(res->fd, false, 0);
-                if(cia_add_epoll(fd_port, fd_port->wr_flag?1:0, fd_port->wr_flag?0:1,  &CSocket::cia_wait_responese_handler, res) == false){
-                    delete fd_port;
-                    LOG_ACC(ERROR, "CSocket::sendResponse() 中向epoll中添加节点时出错[n>0]");
-                    return;
-                } 
-                fd_ports.push_back(fd_port);
+            if(res->send_count > 0){
+                cia_del_epoll(res->fd, false);
             }
-            ++res->send_count;
+            delete res; 
         }
-
-    }else if(n == -1){ // EAGAIN || EWOULDBLOCK,需要加入到epoll中去
-        if(res->send_count == 0){
-            LOG_ACC(INFO, "----尚未发送完整， 放到epoll中去-----");
-            // 加入到epoll中去
-            // add epoll
-            FD_PORT* fd_port = new FD_PORT(res->fd, false, 0);
-            if(cia_add_epoll(fd_port, fd_port->wr_flag?1:0, fd_port->wr_flag?0:1,  &CSocket::cia_wait_responese_handler, res) == false){
-                delete fd_port;
-                LOG_ACC(ERROR, "CSocket::sendResponse() 中向epoll中添加节点时出错[n==-1]");
-                return;
-            } 
-            fd_ports.push_back(fd_port);
-        }
-        ++res->send_count;
-    }else{  // 表示发送出错或者断开连接 n==0||n==-2，清空response即可
-        if(res->send_count > 0){
-            cia_del_epoll(res->fd, false);
-        }
-        delete res; 
+        break;
     }
 }
 
@@ -105,12 +208,9 @@ void CSocket::porcRequest(Message* message){
     // LOG_ACC(INFO, "URL: %s", (message->url).c_str());
     // LOG_ACC(INFO, "Headers: ");
     
-
-    std::string path = CConfig::getInstance()->getPath(message->url); //getPath() 得到 静态资源地址
+    std::string path = CConfig::getInstance()->GetPath(message->url); //getPath() 得到 静态资源地址
 
     int method = message->method;  //GET or POST or OTHERS
-
-
 
     // for(auto itre = (message->headers).begin(); itre != (message->headers).end(); itre++){
     //     LOG_ACC(INFO, "%s:  %s", ((*itre)[0]).c_str(), ((*itre)[1]).c_str());
@@ -122,6 +222,23 @@ void CSocket::porcRequest(Message* message){
     int fd = message->fd;
     delete message;
 
+    struct stat buf;
+    Cia_Response_Header header;
+
+    int filedesc = open(path.c_str(), O_RDONLY);
+
+    if(stat(path.c_str(), &buf) == -1 || filedesc == -1){
+        int err = errno;
+        LOG_ACC(INFO, "打开文件path = %s 出现错误，errno = %d", path.c_str(), err);
+        header.code = "404";
+        header.code_ds = "Not Found";
+    }else{
+        header.code = "200";
+        header.code_ds = "OK";
+        header.Last_Modified = GetGmtTime(&(buf.st_mtime));
+    }  
+    header.Content_Type = "text/html;charset=utf-8";
+    header.Connection = "Keep-Alive";
     // 发送数据
     /*
     std::string code;
@@ -131,28 +248,18 @@ void CSocket::porcRequest(Message* message){
     std::string Last_Modified; // 需要文件相关
     std::string Connection;
     */
-    Cia_Response_Header header;
-    header.code = "200";
-    header.code_ds = "OK";
-    header.Content_Type = "text/html;charset=utf-8";
-    header.Connection = "Keep-Alive";
+    std::string value = header.getHeader();
+    char* buffer = new char[value.length() + 2];
 
-    
-    char value[] = "HTTP/1.1 404 Not Found\r\n"
-         "Date: Sat, 31 Dec 2005 23:59:59 GMT\r\n"
-         "Server: Lucia/0.0.1 (Unix) PHP/5.05\r\n"
-         "Content-Type: text/html;charset=utf-8\r\n"
-         "Connection: Keep-Alive\r\n"
-         "Keep-Alive: timeout=15, max=100\r\n"
-         "\r\n"
-        "HELLO WORLD!\n";
-    
-    char* buf = new char[strlen(value)+2];
+    strcpy(buffer, value.c_str()); 
 
-    memcpy(buf, value, strlen(value));
-    
-    Response* response = new Response(buf, strlen(buf));
+    Response* response = new Response(buffer, strlen(buffer));
     response->fd = fd;
+
+    if(filedesc != -1){
+        response->file_list.push_back(filedesc);
+    }
+    
     datapoll.inResQueue(response);
 }
 

@@ -66,3 +66,9 @@
 - log4cpp 存在内存泄漏
 - 内存泄漏验证方式：
     - valgrind --tool=memcheck --leak-check=summary --trace-children=yes --show-reachable=yes ./lucia
+
+几个常用命令：
+    ps -eo pid,ppid,tty,pgid,stat,comm |grep -E 'PID|lucia|zsh'
+    sudo kill -9 -[PGID]
+    tail -f -n100 access.log
+    sudo dtruss -p [PID]

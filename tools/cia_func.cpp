@@ -57,9 +57,9 @@ int args_printf(std::string& result, const char* fmt, va_list args){
 std::string GetGmtTime(const time_t* rawtime){
     struct tm* timeInfo;
     char szTemp[30]={0};
-    timeInfo = gmtime(rawTime);
+    timeInfo = gmtime(rawtime);
     strftime(szTemp,sizeof(szTemp),"%a, %d %b %Y %H:%M:%S GMT",timeInfo);
 
-    string time_str(szTemp, strlen(szTemp)+1);
+    std::string time_str(szTemp, strlen(szTemp));
     return time_str;
 }

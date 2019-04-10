@@ -5,7 +5,7 @@
 #include "header.h"
 #include "cia_conf.h"
 #include "cia_func.h"
-
+#include "cia_log.h"
 // 静态成员赋初值
 CConfig* CConfig::instance = nullptr;
 
@@ -114,71 +114,72 @@ bool CConfig::ParseLocation(const std::string& str){
     }
     CTriple ctriple;
 
-    switch (vec[1])
-    {   
-        case "~*":
-            /* code */
-            if(vec.size() != 4){
-                return false;
-            }
-            ctriple.rule = RE;
-            ctriple.pattern = vec[2];
-            ctriple.path = vec[3];
-            break;
-        case "=":
-            if(vec.size() != 4){
-                return false;
-            }
-            ctriple.rule = EQ;
-            ctriple.pattern = vec[2];
-            ctriple.path = vec[3];
-            break;
-        case "/":
-            if(vec.size() != 3){
-                return false;
-            }
-            ctriple.rule = OT;
-            // ctriple.pattern = vec[2];
-            ctriple.path = vec[3];
-            break;
-        default:
+    if(vec[1] == "~*"){
+        if(vec.size() != 4){
             return false;
+        }
+        ctriple.rule = RE;
+        ctriple.pattern = vec[2];
+        ctriple.path = vec[3];
+    }else if(vec[1] == "="){
+        if(vec.size() != 4){
+            return false;
+        }
+        ctriple.rule = EQ;
+        ctriple.pattern = vec[2];
+        ctriple.path = vec[3];
+    }else if(vec[1] == "/"){
+        if(vec.size() != 3){
+            return false;
+        }
+        ctriple.rule = OT;
+        // ctriple.pattern = vec[2];
+        ctriple.path = vec[3];
+    }else{
+        return false;
     }
+    
     static_map.push_back(ctriple);
     
     return true;
 }
 
 
-std::string GetPath(const std::string& s){
+std::string CConfig::GetPath(const std::string& s){
+    LOG_ACC(INFO, "CConfig::GetPath()收到的参数是：%s", s.c_str());
     auto itre = static_map.begin();
     for( ; itre != static_map.end(); itre++){
-        if(match(s, (*itre)){
+        if(match(s, (*itre))){
             break;
         }
     }
+    LOG_ACC(INFO, "CConfig::GetPath()返回结果是：%s", itre->path.c_str());
+    std::string val = itre->path + s;
+    LOG_ACC(INFO, "CConfig::GetPath()返回结果是：%s", val.c_str());
     return itre->path + s;
 }
 
-bool match(const string& s, const CTriple& triple){
+bool CConfig::match(const std::string& s, const CTriple& triple){
+    bool result = false;
+    
+    std::regex txt_regex(triple.pattern, std::regex::icase);
     switch (triple.rule)
     {
         case RE:
             /* code */
-            std::regex txt_regex(triple.pattern, std::regex::icase);
-            
-            return std::regex_search(s, txt_regex);
+            result = std::regex_search(s, txt_regex);
             break;
 
         case EQ:
             /* code */
-            if(s == triple.pattern) return true;
-            else return false;
+            if(s == triple.pattern) result = true;
+            else result = false;
             break;
 
         default:  // OT
-            return true;
+            result = true;
             break;
     }
+    return result;
 }
 #endif
