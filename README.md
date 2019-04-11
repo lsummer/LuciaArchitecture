@@ -51,27 +51,27 @@
 
 #### 步骤11.静态服务器搭建
     - HTTP REQUEST中的GET解析，请求具体的html文件，参考nginx的配置
-    - lucia.conf 的解析需要更进一步的处理
+    - lucia.conf 的解析done, 如需增加只需要修改对应的函数【CConfig::ParseLocation】即可
+    - 目前主要的request的cookie设置还没有解析，对应的response的cookie也没有设置，如果要增加http请求头和设置响应头，只需修改cia_socket_http中的文件即可
 
 #### 步骤12.解析图片
 
 #### 备注：
 待解决的问题：
+- [] epoll适配linux环境，这个写好就是0.0.1版本发布之日
+- [] 进程重启，datapoll里面的数据可能会丢失掉，所以要有两种重启的方式，暴力重启和温和重启。
+- [] 惊群效应
+- [] 线程资源池的回收再利用需要延迟吗？需要考虑一下
+- [] Http 中的request和response的cookie
 
-- 进程重启，datapoll里面的数据可能会丢失掉，所以要有两种重启的方式，暴力重启和温和重启。
-- 惊群效应
-- 线程资源池的回收再利用需要延迟吗？需要考虑一下
 
 注意：
-- log4cpp 存在内存泄漏
+- log4cpp 存在内存泄漏，有点坑。
 - 内存泄漏验证方式：
     - valgrind --tool=memcheck --leak-check=summary --trace-children=yes --show-reachable=yes ./lucia
 
 几个常用命令：
-    `ps -eo pid,ppid,tty,pgid,stat,comm |grep -E 'PID|lucia|zsh'`
-
-    `sudo kill -9 -[PGID]`
-
-    `tail -f -n100 access.log`
-
-    `sudo dtruss -p [PID]`
+    - `ps -eo pid,ppid,tty,pgid,stat,comm |grep -E 'PID|lucia|zsh'`
+    - `sudo kill -9 -[PGID]`
+    - `tail -f -n100 access.log`
+    - `sudo dtruss -p [PID]`  追踪子进程使用，但是其实没啥用，除了看惊群效应。因为函数调用全是系统函数，很无语···

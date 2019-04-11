@@ -16,7 +16,7 @@ void CClog::init(){
         
         std::string configname = CConfig::getInstance()->GetString("log_properties");
         if(configname.length() <= 0){
-            configname = "log4cpp.properties";
+            configname = "./config/log4cpp.properties";
         }
         
         log4cpp::PropertyConfigurator::configure(configname);  // 加载配置文件
