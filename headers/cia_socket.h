@@ -12,6 +12,7 @@
 #include "cia_comm.h"
 #include "http_parser.h"
 #include "cia_parser.h"
+#include "cia_response_header.h"
 #ifdef __linux__
     #include <sys/epoll.h>
 #endif
@@ -165,6 +166,13 @@ private:
     int kqueue_fd;  // 建立起的kqueuq的文件描述符
     // struct kevent* kevents;  // 希望后续不会因为多线程的问题而导致出现问题
     int work_connection;   // epoll支持的最大连接数量，
+
+    // ---- 为构造response服务的函数 -------
+    std::string GetContentType(const std::string& url);
+    void getRequestHeader(Message* message, Cia_Response_Header* header);
+    int GetFile(Message* message, Cia_Response_Header* header);
+    void ConstructResponse(Message* message);
+    // -----------------------------------
 
     // ---- 为sendResponse服务的函数 -------
     int sendBuf(Response* res);

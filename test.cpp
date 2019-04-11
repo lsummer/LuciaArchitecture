@@ -170,9 +170,9 @@ int main(int argc, char* argv[])
 	// cout << GetGmtTime(&rawTime) << endl;
 
 
-	string str("\\.(js|css|png|ico|jpg|jpeg|gif|html|json|eot|svg|ttf|woff|txt|gz|mp3|mp4)$");
+	string str("\\.(js|css|png|ico|jpg|jpeg|gif|html|json|eot|svg|ttf|woff|txt|gz|mp3|mp4|mk)$");
 	std::regex txt_regex(str, std::regex::icase);
-	std::string fname = "/Users/lxy/Desktop/404.html";
+	std::string fname = "./config.mk";
 	if(std::regex_search(fname, txt_regex)){
 		struct stat buf;
 		int st = stat(fname.c_str(), &buf);

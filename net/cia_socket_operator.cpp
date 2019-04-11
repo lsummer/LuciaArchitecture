@@ -1,4 +1,3 @@
-
 #include <thread>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -6,10 +5,9 @@
 #include <algorithm>
 #include <unistd.h>
 #include <iostream>
-#include <algorithm>
 #include "cia_socket.h"
 #include "cia_comm.h"
-#include "cia_global.h"
+
 #include "cia_response_header.h"
 
 int CSocket::sendBuf(Response* res){
@@ -147,7 +145,7 @@ int CSocket::sendProc(Response* res){
 // 和recv是对应着的
 // 返回值 >0表示发送对应大小的数据， 0表示客户端断开， -1 表示缓冲区满， -2表示出错;当收到返回值>0和-1时需要考虑加入到epoll写中，此外-2表示出错，0表示断开连接，析构；
 void CSocket::sendResponse(Response* res){
-    LOG_ACC(INFO, "------发送数据-------");
+    // LOG_ACC(INFO, "------发送数据-------");
     for(;;){
         int n = sendProc(res);
         if(n > 0){
@@ -195,7 +193,7 @@ void CSocket::sendResponse(Response* res){
                 // delete from epoll;
                 cia_del_epoll(res->fd, false);
             }
-            LOG_ACC(INFO, "------发送完成------");
+            // LOG_ACC(INFO, "------发送完成------");
             delete res;
         }else{
             if(res->send_count > 0){
@@ -209,89 +207,12 @@ void CSocket::sendResponse(Response* res){
 
 // recv
 void CSocket::porcRequest(Message* message){
-    LOG_ACC(INFO,"线程threadid = %d 开始处理消息",std::this_thread::get_id());
-    // LOG_ACC(INFO,"------- 消息开始 ---------");
-    // // char buf[11] = "Received!";
-    // // int n = send(knode->fd, buf, strlen(buf), 0);
-    // LOG_ACC(INFO, "URL: %s", (message->url).c_str());
-    // LOG_ACC(INFO, "Headers: ");
-    
-    std::string path = CConfig::getInstance()->GetPath(message->url); //getPath() 得到 静态资源地址
-
-    // -----
-    std::string UserAgent = message->url + " ";
-    for(auto itre = (message->headers).begin(); itre != (message->headers).end(); itre++){
-        if((*itre)[0] == "User-Agent"){
-            UserAgent += (*itre)[1];
-            break;
-        }
-    }
-    LOG_ACC(INFO, UserAgent.c_str());
-    // ------
-
-    std::string suffixStr = message->url.substr(message->url.find_last_of('.') + 1);//获取文件后缀
-    
-    transform(suffixStr.begin(), suffixStr.end(), suffixStr.begin(), ::tolower);
-
+    // LOG_ACC(INFO,"线程threadid = %d 开始处理消息",std::this_thread::get_id());
 
     int method = message->method;  //GET or POST or OTHERS
 
-    int fd = message->fd;
+    ConstructResponse(message);
+
     delete message;
-
-    struct stat buf;
-    Cia_Response_Header header;
-
-    int filedesc = open(path.c_str(), O_RDONLY);
-
-    if(stat(path.c_str(), &buf) == -1 || filedesc == -1){
-        int err = errno;
-        LOG_ACC(INFO, "打开文件path = %s 出现错误，errno = %d", path.c_str(), err);
-        header.code = "404";
-        header.code_ds = "Not Found";
-    }else{
-        header.code = "200";
-        header.code_ds = "OK";
-        header.Last_Modified = GetGmtTime(&(buf.st_mtime));
-    }  
-    if(suffixStr == "html"){
-        header.Content_Type = "text/html;charset=utf-8";
-    }else if(suffixStr == "png"){
-        header.Content_Type = "image/png; charset=utf-8";
-    }else if(suffixStr == "gif"){
-        header.Content_Type = "image/gif; charset=utf-8";
-    }else if(suffixStr == "jpg"){
-        header.Content_Type = "image/jpg; charset=utf-8";
-    }else if(suffixStr == "css"){
-        header.Content_Type = "text/css; charset=UTF-8";
-    }else if(suffixStr == "js"){
-        header.Content_Type = "application/javascript; charset=UTF-8";
-    }
-    header.Content_Length = std::to_string(buf.st_size);
-
-    LOG_ACC(INFO, "文件大小为：%s", header.Content_Length.c_str());
-    header.Connection = "keep-alive";
-    // 发送数据
-    /*
-    std::string code;
-    std::string code_ds;
-    std::string Content_Type;
-    std::string Content_Length;// 需要文件相关
-    std::string Last_Modified; // 需要文件相关
-    std::string Connection;
-    */
-    std::string value = header.getHeader();
-    char* buffer = new char[value.length() + 2];
-
-    strcpy(buffer, value.c_str()); 
-
-    Response* response = new Response(buffer, strlen(buffer));
-    response->fd = fd;
-
-    if(filedesc != -1){
-        response->file_list.push_back(filedesc);
-    }
-    
-    datapoll.inResQueue(response);
 }
 

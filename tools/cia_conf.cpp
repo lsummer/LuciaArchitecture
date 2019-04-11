@@ -38,6 +38,57 @@ CConfig* CConfig::getInstance(){
     }
     return instance;
 }
+std::string CConfig::GetMime(const std::string& s){
+    if(mime.find(s) != mime.end()){
+        return mime[s];
+    }else{
+        return "text/plain";
+    }
+}
+
+bool CConfig::read_mime(){
+    std::string path = "./config/mime.types";
+    std::ifstream file(path);
+
+    if(file){
+        std::string line;
+        while(getline(file, line)){
+            if(line.length() > 0){
+                LRtrim(line);
+                if(line.length() <= 0) continue;
+                if(!read_mime_line(line)){
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+bool CConfig::read_mime_line(std::string& str){
+    int begin = 0;
+    std::vector<std::string> vec;
+    bool flag = true;
+    for(int i=0; i<str.length(); i++){
+        if(str[i] == ' ' && flag){
+            vec.push_back(str.substr(begin, i-begin));
+            flag = false;
+        }else if(str[i] != ' ' && !flag){
+            begin = i;
+            flag = true;
+        }
+    }
+    if(flag){
+        vec.push_back(str.substr(begin, str.length()-begin));
+    }
+    int sz = vec.size();
+    if(sz <= 1) return false;
+
+    for(int i=1; i<sz; i++){
+        mime[vec[i]] = vec[0];
+    }
+    return true;
+}
 
 bool CConfig::load(const std::string& filename){
     // 每次load之前 清空conf_item_vector 的内容，避免多次load

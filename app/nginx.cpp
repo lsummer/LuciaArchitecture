@@ -79,7 +79,7 @@ int main(int argc, char* argv[]){
     // 配置文件的单例模式实例：conf_file_instance
     CConfig* conf_file_instance = CConfig::getInstance();
     //  读取配置文件
-    if(!conf_file_instance->load(conf_file_path)){
+    if(!conf_file_instance->load(conf_file_path) || !conf_file_instance->read_mime()){
         cout << "配置文件加载失败，退出！" << endl;
         exit(1);
     }

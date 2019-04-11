@@ -37,11 +37,14 @@ public:
     
     bool load(const std::string& filename);         // 加载配置文件，true表示加载成功， false表示加载失败
 
+    bool read_mime();
+    bool read_mime_line(std::string& str);
+
     std::string GetString(const std::string& s);    // 得到配置文件的参数
     int GetIntDefault(const std::string& s);        // 得到配置文件的int参数
     std::string GetPath(const std::string& s);      // 得到静态资源的地址，首先根据static_map来得到静态资源的地址，然后拼接地址
 
-
+    std::string GetMime(const std::string& s);
     class CConfigHuiShou{                       // 用以回收单例类 
         public:
         ~CConfigHuiShou(){
@@ -64,7 +67,7 @@ private:
 
     static CConfig* instance;
     std::map<std::string, std::string> conf_item_vector; // 配置项
-
+    std::map<std::string, std::string> mime;             // MIME_TYPE
     std::vector<CTriple*> static_map; 
 };
 
