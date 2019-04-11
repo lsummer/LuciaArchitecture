@@ -14,7 +14,9 @@
 int CSocket::sendBuf(Response* res){
     int n;
     for(;;){
+        
         n = send(res->fd, res->begin, res->left_len, 0);
+        
         
         if(n > 0){
             return n;
@@ -55,11 +57,14 @@ void CSocket::closeFile(Response* res, int fd){
 // n == -3 表示上一个文件发送完成了，继续发送下一个文件
 int CSocket::sendFile(Response* res){
     int fn;
-    int NBYTES = 1024;
-    char* buf = new char[NBYTES];  // delete []buf;
+    int NBYTES = 2048;
+    
     for(;;){
+        char* buf = new char[NBYTES];  // delete []buf;
+        memset(buf, 0, NBYTES);
         int file = (res->file_list).front();
-        fn = read(file, buf, NBYTES);
+        fn = read(file, (void *)buf, NBYTES);
+        LOG_ACC(INFO, "读文件的大小：%d", fn);
         if(fn == 0){
             //表示该文件已经读取到末尾，无需再继续读取了;close文件, 并弹出
             delete []buf;
@@ -67,7 +72,7 @@ int CSocket::sendFile(Response* res){
             return -3; // 表示该文件已经发送完毕了，通知sendProc处理下一个文件
         }else if(fn == -1){ // read文件可能出现的错误
             int err = errno;
-            delete []buf;
+            
             switch (err)
             {
                 case EINTR:
@@ -75,38 +80,48 @@ int CSocket::sendFile(Response* res){
                     break;
                 case EAGAIN: 
                     // 当前没有数据可读，等会再试
+                    delete []buf;
                     return -1;
                     break;
                 case EIO:
                     LOG_ACC(ERROR, "CSocket::sendFile()函数read文件时遇到EIO错误");
+                    delete []buf;
                     closeFile(res, file);
                     return -2;
                     break;
                 case EISDIR:
                     LOG_ACC(ERROR, "CSocket::sendFile()函数read文件时遇到EISDIR错误,读取的文件是一个目录");
+                    delete []buf;
                     closeFile(res, file);
                     return -2;
                     break;
                 case EBADF:
                     LOG_ACC(ERROR, "CSocket::sendFile()函数read文件时遇到EBADF错误,读取的文件不是一个合法文件");
+                    delete []buf;
                     closeFile(res, file);
                     return -2;
                     break;
                 case EINVAL:
                     LOG_ACC(ERROR, "CSocket::sendFile()函数read文件时遇到EINVAL错误,文件不可读");
+                    delete []buf;
                     closeFile(res, file);
                     return -2;
                     break;
                 default:
                     LOG_ACC(ERROR, "CSocket::sendFile()函数read文件时遇到未知错误：errno=%d,读取文件出错", err);
+                    delete []buf;
                     closeFile(res, file);
                     return -2;
                     break;
             }
         }else{
+            LOG_ACC(INFO, "------117------");
             res->msg = buf;
+            LOG_ACC(INFO, "------119------");
             res->begin = buf;
+            LOG_ACC(INFO, "------121------");
             res->left_len = fn;
+            LOG_ACC(INFO, "------123------");
             return sendBuf(res);
         }
     }
@@ -142,14 +157,15 @@ void CSocket::sendResponse(Response* res){
     LOG_ACC(INFO, "------发送数据-------");
     for(;;){
         int n = sendProc(res);
-        LOG_ACC(INFO, "%s", res->begin);
+        LOG_ACC(INFO, "fasongle  %d", n);
         if(n > 0){
             if(n >= res->left_len){ //msg中的数据发完了
                 res->msg_finished = true;
-                delete [](res->msg);
+                // delete [](res->msg);
                 res->msg = NULL;
                 res->begin = NULL;
                 res->left_len = -1;
+                LOG_ACC(INFO, "走到这：下一步");
                 continue;
             }else{
                 res->left_len -= n;
@@ -193,6 +209,7 @@ void CSocket::sendResponse(Response* res){
             if(res->send_count > 0){
                 cia_del_epoll(res->fd, false);
             }
+            close(res->fd);
             delete res; 
         }
         break;
@@ -238,7 +255,7 @@ void CSocket::porcRequest(Message* message){
         header.Last_Modified = GetGmtTime(&(buf.st_mtime));
     }  
     header.Content_Type = "text/html;charset=utf-8";
-    header.Connection = "Keep-Alive";
+    header.Connection = "close";
     // 发送数据
     /*
     std::string code;

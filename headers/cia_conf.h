@@ -60,12 +60,12 @@ public:
 
 private:
 
-    bool match(const std::string& s, const CTriple& triple);
+    bool match(const std::string& s, const CTriple* triple);
 
     static CConfig* instance;
     std::map<std::string, std::string> conf_item_vector; // 配置项
 
-    std::vector<CTriple> static_map; 
+    std::vector<CTriple*> static_map; 
 };
 
 #endif

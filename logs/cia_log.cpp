@@ -51,7 +51,6 @@ void CClog::access_log(int priority, const char* info, ...){
         return ;
     }
     va_end(args);
-   
     access->log(priority, result);
 }
 void CClog::error_log(int priority, const char* info, ...){
