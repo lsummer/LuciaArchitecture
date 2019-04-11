@@ -32,6 +32,7 @@ public:
         result += ("Content-Type: " + Content_Type  + "\r\n");
         if(Last_Modified.length() > 0) result += ("Last-Modified: " + Last_Modified  + "\r\n");
         if(Connection.length() > 0) result += ("Connection: " + Connection  + "\r\n");
+        if(Content_Length.length() > 0) result += ("content-length: " + Content_Length  + "\r\n");
         result += ("Accept-Ranges: none\r\n");
         result += "\r\n";
         return result;

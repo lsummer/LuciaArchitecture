@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <unistd.h>
 #include <iostream>
+#include <algorithm>
 #include "cia_socket.h"
 #include "cia_comm.h"
 #include "cia_global.h"
@@ -16,7 +17,6 @@ int CSocket::sendBuf(Response* res){
     for(;;){
         
         n = send(res->fd, res->begin, res->left_len, 0);
-        
         
         if(n > 0){
             return n;
@@ -44,8 +44,6 @@ void CSocket::closeFile(Response* res, int fd){
 
     if(close(fd) == -1){
         LOG_ACC(ERROR, "CSocket::sendFile()函数在关闭文件时出现错误");
-    }else{
-         LOG_ACC(ERROR, "CSocket::sendFile()函数在关闭文件成功");
     }
     res->file_list.pop_front();
 }
@@ -64,7 +62,6 @@ int CSocket::sendFile(Response* res){
         memset(buf, 0, NBYTES);
         int file = (res->file_list).front();
         fn = read(file, (void *)buf, NBYTES);
-        LOG_ACC(INFO, "读文件的大小：%d", fn);
         if(fn == 0){
             //表示该文件已经读取到末尾，无需再继续读取了;close文件, 并弹出
             delete []buf;
@@ -115,13 +112,9 @@ int CSocket::sendFile(Response* res){
                     break;
             }
         }else{
-            LOG_ACC(INFO, "------117------");
             res->msg = buf;
-            LOG_ACC(INFO, "------119------");
             res->begin = buf;
-            LOG_ACC(INFO, "------121------");
             res->left_len = fn;
-            LOG_ACC(INFO, "------123------");
             return sendBuf(res);
         }
     }
@@ -157,7 +150,6 @@ void CSocket::sendResponse(Response* res){
     LOG_ACC(INFO, "------发送数据-------");
     for(;;){
         int n = sendProc(res);
-        LOG_ACC(INFO, "fasongle  %d", n);
         if(n > 0){
             if(n >= res->left_len){ //msg中的数据发完了
                 res->msg_finished = true;
@@ -165,7 +157,7 @@ void CSocket::sendResponse(Response* res){
                 res->msg = NULL;
                 res->begin = NULL;
                 res->left_len = -1;
-                LOG_ACC(INFO, "走到这：下一步");
+                // LOG_ACC(INFO, "走到这：下一步");
                 continue;
             }else{
                 res->left_len -= n;
@@ -209,7 +201,6 @@ void CSocket::sendResponse(Response* res){
             if(res->send_count > 0){
                 cia_del_epoll(res->fd, false);
             }
-            close(res->fd);
             delete res; 
         }
         break;
@@ -227,14 +218,23 @@ void CSocket::porcRequest(Message* message){
     
     std::string path = CConfig::getInstance()->GetPath(message->url); //getPath() 得到 静态资源地址
 
-    int method = message->method;  //GET or POST or OTHERS
+    // -----
+    std::string UserAgent = message->url + " ";
+    for(auto itre = (message->headers).begin(); itre != (message->headers).end(); itre++){
+        if((*itre)[0] == "User-Agent"){
+            UserAgent += (*itre)[1];
+            break;
+        }
+    }
+    LOG_ACC(INFO, UserAgent.c_str());
+    // ------
 
-    // for(auto itre = (message->headers).begin(); itre != (message->headers).end(); itre++){
-    //     LOG_ACC(INFO, "%s:  %s", ((*itre)[0]).c_str(), ((*itre)[1]).c_str());
-    // }
-    // LOG_ACC(INFO,"------- 消息结束 ---------");
-    // // sleep(5);
-    // LOG_ACC(INFO,"线程threadid = %d 结束处理消息",std::this_thread::get_id());
+    std::string suffixStr = message->url.substr(message->url.find_last_of('.') + 1);//获取文件后缀
+    
+    transform(suffixStr.begin(), suffixStr.end(), suffixStr.begin(), ::tolower);
+
+
+    int method = message->method;  //GET or POST or OTHERS
 
     int fd = message->fd;
     delete message;
@@ -254,8 +254,23 @@ void CSocket::porcRequest(Message* message){
         header.code_ds = "OK";
         header.Last_Modified = GetGmtTime(&(buf.st_mtime));
     }  
-    header.Content_Type = "text/html;charset=utf-8";
-    header.Connection = "close";
+    if(suffixStr == "html"){
+        header.Content_Type = "text/html;charset=utf-8";
+    }else if(suffixStr == "png"){
+        header.Content_Type = "image/png; charset=utf-8";
+    }else if(suffixStr == "gif"){
+        header.Content_Type = "image/gif; charset=utf-8";
+    }else if(suffixStr == "jpg"){
+        header.Content_Type = "image/jpg; charset=utf-8";
+    }else if(suffixStr == "css"){
+        header.Content_Type = "text/css; charset=UTF-8";
+    }else if(suffixStr == "js"){
+        header.Content_Type = "application/javascript; charset=UTF-8";
+    }
+    header.Content_Length = std::to_string(buf.st_size);
+
+    LOG_ACC(INFO, "文件大小为：%s", header.Content_Length.c_str());
+    header.Connection = "keep-alive";
     // 发送数据
     /*
     std::string code;
