@@ -165,12 +165,12 @@ void CSocket::sendResponse(Response* res){
                     // 加入到epoll中去
                     // add epolll
                     FD_PORT* fd_port = new FD_PORT(res->fd, false, 0);
-                    if(cia_add_epoll(fd_port, fd_port->wr_flag?1:0, fd_port->wr_flag?0:1,  &CSocket::cia_wait_responese_handler, res) == false){
-                        delete fd_port;
+                    if(cia_add_epoll(fd_port, fd_port->wr_flag?1:0, fd_port->wr_flag?0:1,  &CSocket::cia_wait_responese_handler, res, EPOLL_CTL_MOD) == false){
+                        if(fd_port != NULL) delete fd_port;
                         LOG_ACC(ERROR, "CSocket::sendResponse() 中向epoll中添加节点时出错[n>0]");
                         return;
                     } 
-                    fd_ports.push_back(fd_port);
+                    if(fd_port != NULL) fd_ports.push_back(fd_port);
                 }
                 ++res->send_count;
             }
@@ -180,12 +180,12 @@ void CSocket::sendResponse(Response* res){
                 // 加入到epoll中去
                 // add epoll
                 FD_PORT* fd_port = new FD_PORT(res->fd, false, 0);
-                if(cia_add_epoll(fd_port, fd_port->wr_flag?1:0, fd_port->wr_flag?0:1,  &CSocket::cia_wait_responese_handler, res) == false){
-                    delete fd_port;
+                if(cia_add_epoll(fd_port, fd_port->wr_flag?1:0, fd_port->wr_flag?0:1,  &CSocket::cia_wait_responese_handler, res, EPOLL_CTL_MOD) == false){
+                    if(fd_port != NULL) delete fd_port;
                     LOG_ACC(ERROR, "CSocket::sendResponse() 中向epoll中添加节点时出错[n==-1]");
                     return;
                 } 
-                fd_ports.push_back(fd_port);
+                if(fd_port != NULL) fd_ports.push_back(fd_port);
             }
             ++res->send_count;
         }else if(n == -3){

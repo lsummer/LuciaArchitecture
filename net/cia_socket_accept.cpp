@@ -40,10 +40,10 @@ void CSocket::cia_socket_accept(Kevent_Node* kn){
 
     // TODO 处理连接请求发来的数据
     if(cia_add_epoll(fd_port, fd_port->wr_flag?1:0, fd_port->wr_flag?0:1,  &CSocket::cia_wait_request_handler) == false){
-        delete fd_port;
+        if(fd_port != NULL) delete fd_port;
         return;
     } 
-    fd_ports.push_back(fd_port);
+    if(fd_port != NULL) fd_ports.push_back(fd_port);
 
     // accept_fd 说明连接已经建立，要将该连接加入到kevent里面去
 }

@@ -15,6 +15,23 @@
 #include "cia_response_header.h"
 #ifdef __linux__
     #include <sys/epoll.h>
+#else
+    #define EPOLL_CTL_ADD 1
+    #define EPOLL_CTL_DEL 2
+    #define EPOLL_CTL_MOD 3
+
+    #define EPOLLIN 1
+    #define EPOLLOUT 4
+    #define EPOLLRDHUP 8192
+
+    // #define epoll_create(work_connection) kqueue() 
+    // struct  epoll_event
+    // {
+    //     /* data */
+    //     int events;
+    //     void* data;
+    // };
+    
 #endif
 
 typedef class Kevent_Node Kevent_Node;
@@ -27,7 +44,9 @@ class Kevent_Node{  // 有两种，一种是request，另一种是response，所
 public: 
     int fd;  // 描述符
     int port; // 端口号
-    cia_event_handler_ptr handler;  // 回调函数
+    cia_event_handler_ptr handler;  // 在linux下是：读事件的回调函数；在Mac下式读写事件的回调函数
+    cia_event_handler_ptr writehandler;  /// 仅在linux下有用，是写事件的回调函数
+
     Kevent_Node* next;
 
     Response* c_response;  // 这里并没有删除c_response
@@ -40,7 +59,7 @@ public:
     CParser* c_message;  //在哪里创建，在哪里删除
     
 
-    Kevent_Node():fd(0), port(0), handler(NULL), next(NULL), c_response(NULL){
+    Kevent_Node():fd(0), port(0), handler(NULL), writehandler(NULL), next(NULL), c_response(NULL){
         // http_parser_init(&parser, HTTP_REQUEST);
         c_message = new CParser();
         if(c_message == NULL){
@@ -48,7 +67,7 @@ public:
             exit(-2);
         }
     }
-    Kevent_Node(int fd, cia_event_handler_ptr handler):fd(fd), port(0), handler(handler), next(NULL), c_message(NULL), c_response(NULL){
+    Kevent_Node(int fd, cia_event_handler_ptr handler):fd(fd), port(0), handler(handler), writehandler(NULL), next(NULL), c_message(NULL), c_response(NULL){
         // http_parser_init(&parser, HTTP_REQUEST);
         c_message = new CParser();
         if(c_message == NULL){
@@ -67,6 +86,7 @@ public:
         next = NULL;
         c_message->restore();  // 目的是清楚数据
         c_response = NULL;
+        writehandler = NULL;
         // status = PKG_UNUSE;
         // http_parser_init(&parser, HTTP_REQUEST);
     }
@@ -124,7 +144,7 @@ class FD_PORT{
 public:
     int fd;   // 描述符
     int port;  // 对应的监听端口
-    bool wr_flag;  // 读写标记，因为kqueue自身是分离读和写的，所以要加上这个标记, 读是True， 写是false
+    bool wr_flag;  // 读写标记，因为kqueue自身是分离读和写的，所以要加上这个标记, 读是True（linux下读是true,即可读又可写也是True）， 写是false
     Kevent_Node* event;  //处理该描述符相关 的区域
     FD_PORT(int fd, bool wr_flag, int port):fd(fd),port(port),wr_flag(wr_flag), event(NULL){}
 };
@@ -142,14 +162,32 @@ public:
     // epoll_init()初始化失败的话返回false，直接退出子进程，当某个子进程退出的时候，应该再创建一个
     bool epoll_init();  //epoll的使用是linux only 而 macos是unix-like的，所以使用的是kqueue;
 
-    bool epoll_init_linux();
-    bool epoll_init_macos();  // 创建epoll ；主要三个函数 epoll_create(), epoll_ctl() 和 epoll_wait(); 这里使用epoll_create();
+    #ifdef __linux__
+        bool epoll_init_linux();// 创建epoll ；主要三个函数 epoll_create(), epoll_ctl() 和 epoll_wait(); 这里使用epoll_create();
+        bool cia_operate_epoll_linux(FD_PORT* fd_port_ori, int read, int write, cia_event_handler_ptr handler, Response* response=NULL,  uint32_t event_type=EPOLL_CTL_ADD);
+        void cia_del_epoll_linux(int fd, bool wr_flag);
+        void cia_epoll_process_events_linux(const struct timespec *timeout = NULL);
+    #elif __APPLE__ 
+        bool epoll_init_macos();  
+        bool cia_add_epoll_macos(FD_PORT* fd_port, int read, int write, cia_event_handler_ptr handler, Response* response=NULL);
+        void cia_del_epoll_macos(int fd, bool wr_flag);
+        void cia_epoll_process_events_macos(const struct timespec *timeout = NULL);
+    #endif 
+    
+    
+    bool cia_add_epoll(FD_PORT* fd_port, int read, int write, cia_event_handler_ptr handler, Response* response=NULL, uint32_t event_type=EPOLL_CTL_ADD);
+    
+    void cia_del_epoll(int fd, bool wr_flag);
+    
+    
+
+
     void cia_socket_accept(Kevent_Node* kn);
 
-    bool cia_add_epoll(FD_PORT* fd_port, int read, int write, cia_event_handler_ptr handler, Response* response=NULL);
-    void cia_del_epoll(int fd, bool wr_flag);
-
     void cia_epoll_process_events(const struct timespec *timeout = NULL);
+    
+    
+
     void cia_wait_request_handler(Kevent_Node* kn);  // 处理发来的请求de回调函数
     void cia_wait_responese_handler(Kevent_Node* kn); // 回复请求的回调函数
 
