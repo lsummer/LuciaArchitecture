@@ -1,3 +1,4 @@
+#include <string.h>
 #include "cia_parser.h"
 #include "cia_log.h"
 

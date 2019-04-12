@@ -1,7 +1,7 @@
 #include "cia_setproctitle.h"
 #include <iostream>
 #include "cia_global.h"
-
+#include <string.h>
 // 将环境变量搬家
 void cia_init_setprcotitle(){
     g_environment = 0;

@@ -3,6 +3,10 @@
 
 #include <thread>
 #include <vector>
+#include <mutex>
+#include <atomic>
+#include <condition_variable>
+
 enum thread_type { CREQUEST, CRESPONSE, CNONE };
 
 class CThreadPoll{

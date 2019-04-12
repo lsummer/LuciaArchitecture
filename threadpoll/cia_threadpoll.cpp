@@ -8,7 +8,7 @@ std::condition_variable CThreadPoll::cia_con_var;         // 线程池的条件�
 std::mutex CThreadPoll::cia_mutex_response_con;
 std::condition_variable CThreadPoll::cia_res_var;         // 线程池的条件变量
 
-bool CThreadPoll::shutdown = false;                          // 线程池结束标记
+bool CThreadPoll::shutdown = true;                          // 线程池结束标记
 
 
 CThreadPoll::CThreadPoll(){
@@ -23,6 +23,7 @@ CThreadPoll::~CThreadPoll(){
 }
 // 输入参数是处理request请求的线程池数量，和发送response线程池的数量（一般为1）
 bool CThreadPoll::init(int request_num, int response_num){
+    CThreadPoll::shutdown = false;
     return create(request_num, CREQUEST) && create(request_num, CRESPONSE);
 }
 

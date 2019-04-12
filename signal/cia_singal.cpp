@@ -1,6 +1,8 @@
 
 #include "cia_signal.h"
 #include "cia_global.h"
+
+#include <sys/wait.h>
 static std::vector<lucia_signal_t>  signals = {
     // signo      signame             handler
     { SIGHUP,    "SIGHUP",           cia_singal_handel },        //终端断开信号，对于守护进程常用于reload重载配置文件通知--标识1

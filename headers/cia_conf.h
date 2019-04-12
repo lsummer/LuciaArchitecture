@@ -45,15 +45,6 @@ public:
     std::string GetPath(const std::string& s);      // 得到静态资源的地址，首先根据static_map来得到静态资源的地址，然后拼接地址
 
     std::string GetMime(const std::string& s);
-    class CConfigHuiShou{                       // 用以回收单例类 
-        public:
-        ~CConfigHuiShou(){
-            if(CConfig::instance != nullptr){
-                delete CConfig::instance;
-                CConfig::instance = nullptr;
-            }
-        }
-    };
 
     void test_showAllitem(){
         for(auto itre = conf_item_vector.begin(); itre != conf_item_vector.end(); itre++){

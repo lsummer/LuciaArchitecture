@@ -3,6 +3,9 @@
 #include <string>
 #include <map>
 #include <list>
+#include <mutex>
+#include <atomic>
+#include <condition_variable>
 #include <vector>
 #include "http_parser.h"
 

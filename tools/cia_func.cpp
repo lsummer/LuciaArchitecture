@@ -5,7 +5,7 @@
 
 #include "header.h"
 #include "cia_func.h"
-
+#include <string.h>
 // 去掉左侧的空格
 void Ltrim(std::string& s){
     s.erase(s.begin(), find_if(s.begin(), s.end(),[](const char a){return a!=' ';} ) );

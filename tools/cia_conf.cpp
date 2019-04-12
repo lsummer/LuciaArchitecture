@@ -31,8 +31,6 @@ CConfig* CConfig::getInstance(){
         // 加锁
         if( instance == nullptr){
             instance = new CConfig();
-
-            static CConfigHuiShou c1;
         }
         // 解锁
     }

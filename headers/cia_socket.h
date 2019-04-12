@@ -4,9 +4,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/types.h>
-#include <sys/event.h>
 #include <sys/time.h>
 #include <time.h>
+#include <string.h>
 #include "cia_conf.h"
 #include "cia_log.h"
 #include "cia_comm.h"
@@ -16,6 +16,7 @@
 #ifdef __linux__
     #include <sys/epoll.h>
 #else
+    #include <sys/event.h>
     #define EPOLL_CTL_ADD 1
     #define EPOLL_CTL_DEL 2
     #define EPOLL_CTL_MOD 3
@@ -23,15 +24,6 @@
     #define EPOLLIN 1
     #define EPOLLOUT 4
     #define EPOLLRDHUP 8192
-
-    // #define epoll_create(work_connection) kqueue() 
-    // struct  epoll_event
-    // {
-    //     /* data */
-    //     int events;
-    //     void* data;
-    // };
-    
 #endif
 
 typedef class Kevent_Node Kevent_Node;

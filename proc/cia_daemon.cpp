@@ -19,7 +19,7 @@ int cia_daemon(){
             LOG_ERR(WARN, "守护进程启动失败，结束程序运行：fork()出现错误");
             return -1;
         }else{
-            return 1;
+            return -2;
         }
     }
 

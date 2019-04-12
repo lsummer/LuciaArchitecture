@@ -1,12 +1,11 @@
 #include "cia_socket.h"
 #include "cia_kernal_func.h"
-#include <sys/event.h>
 
-CSocket::CSocket(){}
+CSocket::CSocket():free_link(NULL),kqueue_fd(-1){}
 CSocket::~CSocket(){
     closesocket();
-    delete free_link;
-    close(kqueue_fd);
+    if(free_link != NULL) delete free_link;
+    if(kqueue_fd > 3) close(kqueue_fd);
 }
 
 // 返回值表示是否创建成功一个，如果一个都没创建成功，直接退出程序

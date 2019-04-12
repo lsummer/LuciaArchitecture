@@ -8,6 +8,7 @@
 #include "cia_setproctitle.h"
 #include "cia_log.h"
 #include "cia_kernal_func.h"
+#include "cia_signal.h"
 // #include "cia_socket.h"
 // #include "cia_threadpoo.h"
 #include "cia_global.h"
@@ -24,15 +25,16 @@ CThreadPoll threadpoll;  // 线程池
 DataPoll datapoll;  // 数据池
 
 void freesource(){
+    // cout<<"释放资源"<<endl;
     if(new_environment != NULL) delete []new_environment;
     new_environment = NULL;
-
-    log4cpp::Category::shutdown();
+    // cout<<"释放啦资源"<<endl;
+    // log4cpp::Category::shutdown();
 }
 
 int main(int argc, char* argv[]){ 
     
-    string conf_file_path = "./config/lucia.conf";  // 配置文件的默认地址
+    string conf_file_path("./config/lucia.conf");  // 配置文件的默认地址
     
     int exitcode = 0;
 
