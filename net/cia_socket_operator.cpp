@@ -15,7 +15,7 @@ int CSocket::sendBuf(Response* res){
     for(;;){
         
         n = send(res->fd, res->begin, res->left_len, 0);
-        
+        // LOG_ERR(INFO, "发送数据大小为:%d", n);
         if(n > 0){
             return n;
         }
@@ -171,6 +171,7 @@ void CSocket::sendResponse(Response* res){
                         return;
                     } 
                     if(fd_port != NULL) fd_ports.push_back(fd_port);
+                    else{LOG_ACC(INFO, "SEND的时候确实吧fd_port删掉了");}
                 }
                 ++res->send_count;
             }
@@ -191,6 +192,7 @@ void CSocket::sendResponse(Response* res){
         }else if(n == -3){
             if(res->send_count > 0){     // 表示加入到epoll中去了，要删掉
                 // delete from epoll;
+                LOG_ACC(INFO, "------发送完成, 准备回收------");
                 cia_del_epoll(res->fd, false);
             }
             // LOG_ACC(INFO, "------发送完成------");

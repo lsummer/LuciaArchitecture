@@ -33,6 +33,7 @@ void CSocket::cia_wait_request_handler(Kevent_Node* kn){
         return;
     }
 
+    // LOG_ERR(INFO, "收到数据：%s", buffer);
     size_t nparsed = kn->c_message->parser_execute(buffer, n);
 
     if (nparsed != (size_t)n) {

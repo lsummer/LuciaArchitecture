@@ -170,9 +170,6 @@ public:
     bool cia_add_epoll(FD_PORT* fd_port, int read, int write, cia_event_handler_ptr handler, Response* response=NULL, uint32_t event_type=EPOLL_CTL_ADD);
     
     void cia_del_epoll(int fd, bool wr_flag);
-    
-    
-
 
     void cia_socket_accept(Kevent_Node* kn);
 

@@ -119,7 +119,7 @@ bool CSocket::cia_add_epoll(FD_PORT* fd_port, int read, int write, cia_event_han
     #elif __APPLE__    // macos操作系统 kqueue
         return cia_add_epoll_macos(fd_port, read, write, handler, response);
     #else
-        return fasle;
+        return false;
     #endif
 }
 void CSocket::cia_del_epoll(int fd, bool wr_flag){
@@ -143,12 +143,8 @@ bool CSocket::epoll_init_linux(){
     
     work_connection = CConfig::getInstance()->GetIntDefault("Worker_connection");
 
-    #ifdef __linux__
-        kqueue_fd = epoll_create(work_connection);
-    #else
-        kqueue_fd = -1;
-    #endif 
-    
+    kqueue_fd = epoll_create(work_connection);
+
     if(kqueue_fd == -1){
         LOG_ERR(ERROR, "worker进程pid=%d中CSocket::epoll_init() 中 kqueue() 监听端口失败，直接退出！",getpid()) ;
         return false;
@@ -187,33 +183,32 @@ bool CSocket::epoll_init_linux(){
 bool CSocket::cia_operate_epoll_linux(FD_PORT* fd_port_ori, int read, int write, cia_event_handler_ptr handler, Response* response,  uint32_t event_type){
     
     uint32_t truth_type = event_type;
+   
 
-
-    struct epoll_event ev;
-    
-        
+    struct epoll_event ev;     
    
     //int op;
     memset(&ev, 0, sizeof(ev));
 
     FD_PORT* fd_port = fd_port_ori;
-    if(fd_port_ori->wr_flag == false){
-        auto itre = fd_ports.begin(); // 如果是写，只需要获得已有的读的fd_port即可；如果是读，则是一个新的fd_port;
-        for(; itre != fd_ports.end(); itre++){
-            if((*itre)->fd == fd_port_ori->fd){
-                break;
-            }
-        }
-        if(itre != fd_ports.end()){
-            fd_port = (*itre);
-            delete fd_port_ori;
-            fd_port_ori = NULL;
-        }
-    }
-
     Kevent_Node* kevent_node = NULL;
     
     if(event_type == EPOLL_CTL_ADD){
+
+        if(fd_port_ori->wr_flag == false){
+            auto itre = fd_ports.begin(); // 如果是写，只需要获得已有的读的fd_port即可；如果是读，则是一个新的fd_port;
+            for(; itre != fd_ports.end(); itre++){
+                if((*itre)->fd == fd_port_ori->fd){
+                    break;
+                }
+            }
+            if(itre != fd_ports.end()){
+                fd_port = (*itre);
+                delete fd_port_ori;
+                fd_port_ori = NULL;
+            }
+        }
+
         kevent_node = free_link->get_Node();
         if(kevent_node == NULL){
             return false;
@@ -253,7 +248,7 @@ bool CSocket::cia_operate_epoll_linux(FD_PORT* fd_port_ori, int read, int write,
             // kevent_node->writehandler = NULL:
         }
     }
-    
+    if(kevent_node == NULL) {LOG_ERR(ERROR, "kevent_node = NULL, 说明出现了错误");}
     fd_port->event = kevent_node;
 
     ev.data.ptr = (void *)(kevent_node);
@@ -278,11 +273,16 @@ void CSocket::cia_del_epoll_linux(int fd, bool wr_flag){
     }
     if(itre != fd_ports.end()){
         if(wr_flag){  // 读删除的时候是真的删除，因为使用了EPOLLRDHUP
-            free_link->insert_Node((*itre)->event);  // 回收连接池
+            // if((*itre)->event == NULL) {LOG_ERR(ERROR, "为什么这里是NULL");}
+            if((*itre)->event != NULL) {
+                free_link->insert_Node((*itre)->event);  // 回收连接池
+                // LOG_ERR(INFO, "这里没什么问题");
+            }
             (*itre)->event = NULL;
             delete (*itre);
             (*itre) = NULL;
             fd_ports.erase(itre);
+            close(fd);
         }else{ // 写删除的时候只是把写给MOD了
             cia_operate_epoll_linux((*itre), 0, 1, NULL, NULL,  EPOLL_CTL_DEL);
         }
@@ -309,12 +309,13 @@ void CSocket::cia_del_epoll_macos(int fd, bool wr_flag){
         
         EV_SET(&kev2, fd, (*itre)->wr_flag?EVFILT_READ:EVFILT_WRITE, EV_DELETE, NULL, 0, (*itre)->event);
         kevent(kqueue_fd, &kev2, 1, NULL, 0, NULL);
-        free_link->insert_Node((*itre)->event);  // 回收连接池
+        if((*itre)->event != NULL) free_link->insert_Node((*itre)->event);  // 回收连接池
 
         (*itre)->event = NULL;
         delete (*itre);
         (*itre) = NULL;
         fd_ports.erase(itre);
+        close(fd);
     }
 }
 
