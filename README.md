@@ -14,7 +14,7 @@
 
 
 
-- [Demo演示地址](http://icontinua.cn:8011/tags.html) ：项目的Gitstats。
+- [Demo演示地址](http://icontinua.cn:8011/index.html) ：项目的Gitstats。
 
 - [代码流程 (Real README)](https://github.com/lsummer/LuciaArchitecture/blob/master/README_old.md)
 
@@ -29,6 +29,10 @@ Lucia Server 可以运行在`linux`和`macOS`环境下，已在`Ubuntu 18.04.1 L
 #### 下载
 
 `git clone https://github.com/lsummer/LuciaArchitecture`
+
+#### 安装库
+
+[log4cpp](http://log4cpp.sourceforge.net/)
 
 #### 运行
 
