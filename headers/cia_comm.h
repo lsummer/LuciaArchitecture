@@ -81,7 +81,7 @@ public:
     size_t left_len; // header头文件相关的信息
     
     bool msg_finished; // msg区域是否发送完成
-    std::list<int> file_list;
+    std::list<int> file_list;   // 需要加锁的，避免多个线程同时往这个response中加数据
 
     std::atomic<int> send_count;
     int fd; // 发送到文件描述符fd处去
