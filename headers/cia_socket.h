@@ -168,21 +168,16 @@ public:
     
     
     bool cia_add_epoll(FD_PORT* fd_port, int read, int write, cia_event_handler_ptr handler, Response* response=NULL, uint32_t event_type=EPOLL_CTL_ADD);
-    
     void cia_del_epoll(int fd, bool wr_flag);
-
     void cia_socket_accept(Kevent_Node* kn);
-
     void cia_epoll_process_events(const struct timespec *timeout = NULL);
-    
-    
 
     void cia_wait_request_handler(Kevent_Node* kn);  // 处理发来的请求de回调函数
     void cia_wait_responese_handler(Kevent_Node* kn); // 回复请求的回调函数
 
-    
     void sendResponse(Response* res);    // 发送请求
     void porcRequest(Message* message);  // 处理request
+
 private:
     // 三件套，当多了一个需要处理的文件描述符时，需要将一个对应的FD_PORT添加到fd_ports中去，current_link需要+1，free_link需要getNode()一次
     // 当关闭一个文件描述符时， 需要删除一个fd_ports
@@ -194,6 +189,9 @@ private:
     // struct kevent* kevents;  // 希望后续不会因为多线程的问题而导致出现问题
     int work_connection;   // epoll支持的最大连接数量，
 
+    /**
+     * 针对静态资源请求的函数
+     * */
     // ---- 为构造response服务的函数 -------
     std::string GetContentType(const std::string& url);
     void getRequestHeader(Message* message, Cia_Response_Header* header);
@@ -207,6 +205,20 @@ private:
     int sendProc(Response* res);
     void closeFile(Response* res, int fd);
     // ------------------------------------
+
+
+    /**
+     * 针对业务处理的函数
+     * */
+    // 处理POST消息
+    bool prcoPost(Message* message);
+
+    bool parsePostBody(Message* message, const std::string& body, const std::string& boundry);
+    // 输入参数表示HTTPbody值和Block位置的[begin, end)
+    bool parsePostBlock(Message* message, const std::string& body, int begin, int end);
+    // 处理Body里的block的header
+    void procBodyHeader(const char* body_header, int body_header_l, std::string& name, std::string& filename);
+    
 };
 
 #endif

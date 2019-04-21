@@ -8,6 +8,7 @@
 #include<cstring>
 #include <string.h>
 #include <regex>
+#include <map>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -170,20 +171,20 @@ int main(int argc, char* argv[])
 	// cout << GetGmtTime(&rawTime) << endl;
 
 
-	string str("\\.(js|css|png|ico|jpg|jpeg|gif|html|json|eot|svg|ttf|woff|txt|gz|mp3|mp4|mk)$");
-	std::regex txt_regex(str, std::regex::icase);
-	std::string fname = "./config.mk";
-	if(std::regex_search(fname, txt_regex)){
-		struct stat buf;
-		int st = stat(fname.c_str(), &buf);
-		int fd = open(fname.c_str(), O_RDONLY);
-		char x[1024];
-		cout << read(fd, x, 1024) <<endl;
+	// string str("\\.(js|css|png|ico|jpg|jpeg|gif|html|json|eot|svg|ttf|woff|txt|gz|mp3|mp4|mk)$");
+	// std::regex txt_regex(str, std::regex::icase);
+	// std::string fname = "./config.mk";
+	// if(std::regex_search(fname, txt_regex)){
+	// 	struct stat buf;
+	// 	int st = stat(fname.c_str(), &buf);
+	// 	int fd = open(fname.c_str(), O_RDONLY);
+	// 	char x[1024];
+	// 	cout << read(fd, x, 1024) <<endl;
 		
-		printf("%s", x);
-		// close(fd);
-		// cout << GetGmtTime(&(buf.st_mtime)) << endl;
-	}
+	// 	printf("%s", x);
+	// 	// close(fd);
+	// 	// cout << GetGmtTime(&(buf.st_mtime)) << endl;
+	// }
 
 	// std::string value = "header.getHeader()";
     // char* buf = new char[value.length()+2];
@@ -191,6 +192,40 @@ int main(int argc, char* argv[])
     // strcpy(buf, value.c_str()); 
 	// printf("%s\n%lu", buf, strlen(buf));
 
+
+	// FILE* png = fopen("/Users/lxy/Desktop/Arch.png", "r");
+	// FILE* wpng = fopen("/Users/lxy/Desktop/Arch_copy.png", "w");
+
+	// struct stat buf;
+
+    
+    // if(stat("/Users/lxy/Desktop/Arch.png", &buf) == -1 ){
+	// 	return 0;
+	// }
+	// unsigned char buffer[buf.st_size];
+	
+	// size_t size = fread(&buffer, sizeof(unsigned char), buf.st_size, png);
+	// fwrite(&buffer, sizeof(unsigned char), buf.st_size, wpng);
+
+	// string a="1234688765434123223322";
+	// cout <<a <<endl;
+	// auto itre = a.find_first_of("123");
+	// a.erase(itre, itre+3);
+	// cout <<a <<endl;
+
+	// char m[] = "asdfgfd";
+	// string x(m, 3);
+	// cout << x <<endl;
+
+
+	map<string, string> m;
+	string key, value;
+	key = "123";
+	value  = "123";
+	m[key] = value;
+	for(auto x:m){
+		cout << x.first << " : " << x.second << endl;
+	}
 	return 0;
 
 }

@@ -4,12 +4,14 @@
 #include <sys/stat.h>
 #include <algorithm>
 #include <unistd.h>
+#include <stdio.h>
 #include <iostream>
 #include "cia_socket.h"
 #include "cia_comm.h"
 
 #include "cia_response_header.h"
 
+typedef unsigned char BYTE;
 int CSocket::sendBuf(Response* res){
     int n;
     for(;;){
@@ -211,10 +213,39 @@ void CSocket::sendResponse(Response* res){
 void CSocket::porcRequest(Message* message){
     // LOG_ACC(INFO,"线程threadid = %d 开始处理消息",std::this_thread::get_id());
 
-    int method = message->method;  //GET or POST or OTHERS
+    LOG_ACC(INFO, "----------消息全文-----------");
+    LOG_ACC(INFO, message->url.c_str());
+    LOG_ACC(INFO, std::to_string(message->method).c_str());
 
-    ConstructResponse(message);
+    bool pro_succ = true;
+    switch ( message->method ) {
+        case 1: // GET
+            ConstructResponse(message);  //构造响应，HTTP 处理方式; 目前是静态资源服务器
+            break;
+        case 3: // POST
+            pro_succ = prcoPost(message);  // 尚未增加响应
+            break;
+        default:
+            break;
+    }
+    if(!pro_succ){
+        LOG_ACC(ERROR, "CSocket::porcRequest() %s Post 请求解析出现错误！", message->url.c_str());
+    }
 
+    // 打印request消息头
+    // for(int i=0; i<message->headers.size(); i++){
+    //     std::string line;
+    //     for(auto x:message->headers[i]){
+    //         line += x + "  ";
+    //     }
+    //     LOG_ACC(INFO, line.c_str());
+    // }
+    // LOG_ACC(INFO, "-------body---------");
+    // LOG_ACC(INFO, "接收到的数据大小：%d", (message->body.length()));
+    
+    // 打印request消息包
+    // LOG_ACC(INFO, message->body.c_str());
+
+    // int method = message->method;  //GET or POST or OTHERS
     delete message;
 }
-

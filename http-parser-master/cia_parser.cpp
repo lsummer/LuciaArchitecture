@@ -70,7 +70,7 @@ int CParser::on_header_field(http_parser* _, const char* at, size_t length){
     // LOG_ACC("Header field: %.*s\n", (int)length, at);
     std::string header_field = std::string(at,at+length);
     (*messgae).back()->headers.push_back(std::vector<std::string>{header_field});
-    (*messgae).back()->header_map[header_field] = (*messgae).size()-1;
+    (*messgae).back()->header_map[header_field] = (*messgae).back()->headers.size()-1;
     return 0;
 };
 int CParser::on_header_value(http_parser* _, const char* at, size_t length){
@@ -82,8 +82,9 @@ int CParser::on_header_value(http_parser* _, const char* at, size_t length){
 };
 int CParser::on_body(http_parser* _, const char* at, size_t length){
     std::list<Message*> *messgae = (std::list<Message*> *)_->data;
+    LOG_ACC(INFO, "on_body接收到的数据大小是：%d", length);
     // LOG_ACC("Body: %.*s\n", (int)length, at);
-    (*messgae).back()->body = std::string(at, at+length);
+    (*messgae).back()->body += std::string(at, at+length);
     return 0;
 };
 

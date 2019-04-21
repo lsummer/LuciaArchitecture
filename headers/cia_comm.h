@@ -2,6 +2,7 @@
 #define __HEADERS_CIA_COMM_H__
 #include <string>
 #include <map>
+#include <unordered_map>
 #include <list>
 #include <mutex>
 #include <atomic>
@@ -33,19 +34,28 @@ class Message {  // 目前message只是处理了request的数据，reponse的数
         headers.clear();
         headers.shrink_to_fit();
         header_map.clear();
+
+        post_body.clear();
     }
     enum http_parser_type type; // HTTP_REQUEST HTTP_REPONSE
     int method;  // 1-GET 3-POST
 
     int fd;  // 那个文件描述符的消息
+
+    // 存储 request 的报文头部信息
     std::string url;
     std::string body;
     std::vector<std::vector<std::string>> headers;
-    std::map<std::string, int> header_map;
+    std::map<std::string, int> header_map;  // 头文件的header与所在headers的映射 last_modified: 1 means headers[1] = "XXXX GMT"(last_modified)
 
     bool message_begin_cb_called;
     bool headers_complete_cb_called;
     bool message_complete_cb_called;
+
+    // 存储 post 信息的相关内容
+    std::unordered_map<std::string, std::string> post_body;  // 用来存储 post 信息的相关数据。 post数据中一般有 name : value
+
+
 };
 
 // class FileStream{
