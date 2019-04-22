@@ -117,3 +117,4 @@ gdb
 - [使用gitstats统计本地git代码](https://sealake.net/analyze-your-local-gitrepo-by-gitstats/)
 - [深入解析 multipart/form-data](https://www.jianshu.com/p/29e38bcc8a1d)
 - [linux 信号列表及分析](https://blog.51cto.com/myunix/1107528)
+- [RESTful API 设计指南](http://www.ruanyifeng.com/blog/2014/05/restful_api.html)

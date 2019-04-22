@@ -103,8 +103,11 @@ bool CConfig::load(const std::string& filename){
                 if(line.length() <= 0) continue;
                 if(line[0] == '#' || line[0] == '[' || line[0] == '\t' || line[0] == '\n' || line[0] == '{' || line[0] == '}') continue;
                 
+                EraseAnnoation(line);
+
                 // 判断location， 静态资源映射
                 if(line.length() > 8 && line.substr(0, 8) == "location"){
+                    
                     if(ParseLocation(line)){
                         continue;
                     }else{
@@ -119,8 +122,8 @@ bool CConfig::load(const std::string& filename){
                     
                     std::string iteamname = line.substr(0, int(index));
                     std::string iteamvalue = line.substr(int(index)+1);
-                    EraseAnnoation(iteamname);
-                    EraseAnnoation(iteamvalue);
+                    // EraseAnnoation(iteamname);
+                    // EraseAnnoation(iteamvalue);
                     LRtrim(iteamname);
                     LRtrim(iteamvalue);
 
@@ -152,7 +155,23 @@ int CConfig::GetIntDefault(const std::string& s){
     }
     return std::stoi(res);
 }
+/**
+ *  # // 10. location 开头的表示一个静态资源映射地址
+    # //     10.1 ~* 执行正则匹配，但不区分大小写 （四元组） location ~* pattern path
+    # //     10.2 ~ 执行正则匹配，区分大小写 （四元组） location ~ pattern path
+    # //     10.3 = 执行完全匹配 （四元组） location = pattern path
+    # //     10.4 / 所有匹配  （三元组） location / path
+    # //     10.5 ^~ 前缀匹配 （四元组）location ^~ pattern path
+    # // 11. location 开头的表示一个RestFul API
+    # //     11.1 ~* 执行正则匹配，但不区分大小写 （五元组） location ~* pattern API func
+    # //     11.2 ~ 执行正则匹配，区分大小写 （五元组） location ~ pattern API func
+    # //     11.3 = 执行完全匹配 （五元组） location = pattern API func
+    # //     11.4 / 所有匹配  （四元组） location / API func
+    # //     11.5 ^~ 前缀匹配 （五元组）location ^~ pattern API func
+    # //     备注：为了更简洁方便地区分与静态资源服务器的区别，在func前需要加入关键字API，表示这是一个restful api请求
+ * enum STATIC_MAP { RE, EQ, OT, PR, REU }; // RE表示不区分大小写的正则匹配「~*」，EQ表示相等「=」， OT表示其他「/」, PR表示「^~」, REU表示「~」 
 
+ * */
 bool CConfig::ParseLocation(const std::string& str){
     int begin = 0;
     std::vector<std::string> vec;
@@ -172,26 +191,80 @@ bool CConfig::ParseLocation(const std::string& str){
     CTriple* ctriple = new CTriple();
 
     if(vec[1] == "~*"){
-        if(vec.size() != 4){
+        if(vec.size() == 4){
+            // return false;
+            ctriple->rule = RE;
+            ctriple->pattern = vec[2];
+            ctriple->path = vec[3];
+            ctriple->request_type = 0;
+        }else if(vec.size() == 5 && vec[3] == "API"){
+            ctriple->rule = RE;
+            ctriple->pattern = vec[2];
+            ctriple->path = vec[4];
+            ctriple->request_type = 1;
+        }else{
             return false;
         }
-        ctriple->rule = RE;
-        ctriple->pattern = vec[2];
-        ctriple->path = vec[3];
+        
     }else if(vec[1] == "="){
-        if(vec.size() != 4){
+        if(vec.size() == 4){
+            ctriple->rule = EQ;
+            ctriple->pattern = vec[2];
+            ctriple->path = vec[3];
+            ctriple->request_type = 0;
+        }else if(vec.size() == 5 && vec[3] == "API"){
+            ctriple->rule = EQ;
+            ctriple->pattern = vec[2];
+            ctriple->path = vec[4];
+            ctriple->request_type = 1;
+        }else{
+            // LOG_ACC(ERROR, "出现错误");
+            std::cout << "出现错误" << vec.size() << vec[3] << std::endl;
             return false;
         }
-        ctriple->rule = EQ;
-        ctriple->pattern = vec[2];
-        ctriple->path = vec[3];
+        
     }else if(vec[1] == "/"){
-        if(vec.size() != 3){
+        if(vec.size() == 3){
+            ctriple->rule = OT;
+            // ctriple.pattern = vec[2];
+            ctriple->path = vec[2];
+            ctriple->request_type = 0;
+        }else if(vec.size() == 4 && vec[2] == "API"){
+            ctriple->rule = OT;
+            // ctriple->pattern = vec[2];
+            ctriple->path = vec[3];
+            ctriple->request_type = 1;
+        }else{
             return false;
         }
-        ctriple->rule = OT;
-        // ctriple.pattern = vec[2];
-        ctriple->path = vec[2];
+    }else if(vec[1] == "~"){
+        if(vec.size() == 4){
+            ctriple->pattern = vec[2];
+            ctriple->path = vec[3];
+            ctriple->rule = REU;
+            ctriple->request_type = 0;
+        }else if(vec.size() == 5 && vec[3] == "API"){
+            ctriple->rule = REU;
+            ctriple->pattern = vec[2];
+            ctriple->path = vec[4];
+            ctriple->request_type = 1;
+        }else{
+            return false;
+        }
+    }else if(vec[1] == "^~"){
+        if(vec.size() == 4){
+            ctriple->rule = PR;
+            ctriple->pattern = vec[2];
+            ctriple->path = vec[3];
+            ctriple->request_type = 0;
+        }else if(vec.size() == 5 && vec[3] == "API"){
+            ctriple->rule = PR;
+            ctriple->pattern = vec[2];
+            ctriple->path = vec[4];
+            ctriple->request_type = 1;
+        }else{
+            return false;
+        }
     }else{
         return false;
     }
@@ -201,21 +274,42 @@ bool CConfig::ParseLocation(const std::string& str){
     return true;
 }
 
-
-std::string CConfig::GetPath(const std::string& s){
+int CConfig::RequestType(const std::string& s){
     int i = 0;
     for(; i<static_map.size(); i++){
-        if(match(s, static_map[i])){
+        if(match(s, static_map[i])){   // 既要匹配又要是静态资源服务器
             break;
         }
     }
+    if(i >= static_map.size()){
+        return -1;
+    }
+    // LOG_ERR(DEBUG, "请求 %s的类型为：%d", s.c_str(),static_map[i]->request_type);
+    return static_map[i]->request_type;
+
+}
+
+// 静态资源服务器
+std::string CConfig::GetPath(const std::string& s){
+    int i = 0;
+    for(; i<static_map.size(); i++){
+        if(match(s, static_map[i]) && static_map[i]->request_type == 0){   // 既要匹配又要是静态资源服务器
+            break;
+        }
+    }
+
+    if(i >= static_map.size()){
+        return ""; // 表示失败了，没有匹配到任何静态资源地址
+    }
     std::string val = static_map[i]->path + s;
-    return static_map[i]->path + s;
+    return val;
+    // return static_map[i]->path + s;
 }
 
 bool CConfig::match(const std::string& s, const CTriple* triple){
 
     std::regex txt_regex(triple->pattern, std::regex_constants::icase);
+    std::regex txt2_regex(triple->pattern);
 
     switch (triple->rule)
     {
@@ -223,6 +317,12 @@ bool CConfig::match(const std::string& s, const CTriple* triple){
             /* code */
            
             return std::regex_search(s, txt_regex);
+            break;
+        case REU:
+            return std::regex_search(s, txt2_regex);
+            break;
+        case PR:
+            return s.find(triple->pattern) == 0;
             break;
 
         case EQ:

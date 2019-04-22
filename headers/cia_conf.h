@@ -15,13 +15,14 @@
 
 #include "header.h"
 
-enum STATIC_MAP { RE, EQ, OT }; // RE表示不区分大小写的正则匹配「~*」，EQ表示相等「=」， OT表示其他「/」
+enum STATIC_MAP { RE, EQ, OT, PR, REU }; // RE表示不区分大小写的正则匹配「~*」，EQ表示相等「=」， OT表示其他「/」, PR表示「^~」, REU表示「~」 
 
 class CTriple{
 public:
     enum STATIC_MAP rule;
     std::string pattern;
     std::string path;
+    int request_type; // 0-静态资源请求，1-restful api请求
 };
 
 class CConfig{
@@ -42,7 +43,17 @@ public:
 
     std::string GetString(const std::string& s);    // 得到配置文件的参数
     int GetIntDefault(const std::string& s);        // 得到配置文件的int参数
-    std::string GetPath(const std::string& s);      // 得到静态资源的地址，首先根据static_map来得到静态资源的地址，然后拼接地址
+
+    // 得到静态资源的地址，首先根据static_map来得到静态资源的地址，然后拼接地址
+    // 如果没有找到匹配地址，返回 ""
+    std::string GetPath(const std::string& s);
+
+    /**
+     * 根据请求的URI判断 请求leix
+     * 参数： 请求的URI
+     * 返回值： -1 没有匹配的结果，0 静态资源请求， 1 RestFul API请求
+     * */
+    int RequestType(const std::string& s);
 
     std::string GetMime(const std::string& s);
 

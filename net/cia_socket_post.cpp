@@ -143,6 +143,8 @@ void CSocket::procBodyHeader(const char* body_header, int body_header_l, std::st
 
     // Content-Disposition: form-data; name="anothers"
     std::string header(body_header, body_header_l);
+
+    LOG_ACC(DEBUG, "header信息:%s", header.c_str());
     int name_begin = header.find("name=\"") + 6;  
     int name_end = header.find("\"", name_begin);
     if(name_begin != std::string::npos){
@@ -159,16 +161,16 @@ void CSocket::procBodyHeader(const char* body_header, int body_header_l, std::st
 
     LOG_ACC(INFO, "name = %s", name.c_str());
 
-    int file_name_begin = header.find("filename=\"", name_begin) + 10;
-    int file_name_end = header.find('"', file_name_begin);
+    int file_name_begin = header.find("filename=\"", name_begin);
     if(file_name_begin != std::string::npos){
+        file_name_begin += 10;
+        int file_name_end = header.find('"', file_name_begin);
         if(file_name_end != std::string::npos){
             filename = header.substr(file_name_begin, file_name_end - file_name_begin);
         }else{
             filename = header.substr(file_name_begin);
         }
-    }else
-    {
+    }else{
         filename = "";   
     }
     LOG_ACC(INFO, "filename = %s", filename.c_str());

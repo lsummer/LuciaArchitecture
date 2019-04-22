@@ -220,17 +220,19 @@ void CSocket::porcRequest(Message* message){
     bool pro_succ = true;
     switch ( message->method ) {
         case 1: // GET
-            ConstructResponse(message);  //构造响应，HTTP 处理方式; 目前是静态资源服务器
+            ConstructResponse(message);  //构造响应，HTTP 处理方式;
             break;
         case 3: // POST
             pro_succ = prcoPost(message);  // 尚未增加响应
+            if(!pro_succ){
+                LOG_ACC(ERROR, "CSocket::porcRequest() %s Post 请求解析出现错误！", message->url.c_str());
+            }
+            ConstructResponse(message);  //构造响应，HTTP 处理方式; 目前是静态资源服务器
             break;
         default:
             break;
     }
-    if(!pro_succ){
-        LOG_ACC(ERROR, "CSocket::porcRequest() %s Post 请求解析出现错误！", message->url.c_str());
-    }
+    
 
     // 打印request消息头
     // for(int i=0; i<message->headers.size(); i++){

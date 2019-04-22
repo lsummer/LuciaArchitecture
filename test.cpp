@@ -218,14 +218,48 @@ int main(int argc, char* argv[])
 	// cout << x <<endl;
 
 
-	map<string, string> m;
-	string key, value;
-	key = "123";
-	value  = "123";
-	m[key] = value;
-	for(auto x:m){
-		cout << x.first << " : " << x.second << endl;
-	}
+	// map<string, string> m;
+	// string key, value;
+	// key = "123";
+	// value  = "123";
+	// m[key] = value;
+	// for(auto x:m){
+	// 	cout << x.first << " : " << x.second << endl;
+	// }
+	string header = "Content-Disposition: form-data; name=\"arch\"";
+	// string s = "/v1/test/callservice";
+	string name, filename;
+	int name_begin = header.find("name=\"") + 6;  
+    int name_end = header.find("\"", name_begin);
+    if(name_begin != std::string::npos){
+        if(name_end != std::string::npos){
+            name = header.substr(name_begin, name_end-name_begin);
+        }else{
+            name = header.substr(name_begin);
+        }
+    }else{
+        name = "";
+        filename = "";
+        // return;
+    }
+	cout << name_begin <<endl;
+	cout << name << endl;
+
+    int file_name_begin = header.find("filename=\"", name_begin);
+    int file_name_end = header.find('"', file_name_begin);
+    if(file_name_begin != std::string::npos){
+        if(file_name_end != std::string::npos){
+            filename = header.substr(file_name_begin, file_name_end - file_name_begin);
+        }else{
+            filename = header.substr(file_name_begin);
+        }
+    }else
+    {
+        filename = "";   
+    }
+    // LOG_ACC(INFO, "filename = %s", filename.c_str());
+
+	cout << filename<< endl;
 	return 0;
 
 }

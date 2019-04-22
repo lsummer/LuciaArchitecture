@@ -82,7 +82,7 @@ int CParser::on_header_value(http_parser* _, const char* at, size_t length){
 };
 int CParser::on_body(http_parser* _, const char* at, size_t length){
     std::list<Message*> *messgae = (std::list<Message*> *)_->data;
-    LOG_ACC(INFO, "on_body接收到的数据大小是：%d", length);
+    // LOG_ACC(INFO, "on_body接收到的数据大小是：%d", length);
     // LOG_ACC("Body: %.*s\n", (int)length, at);
     (*messgae).back()->body += std::string(at, at+length);
     return 0;

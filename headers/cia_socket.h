@@ -196,6 +196,11 @@ private:
     std::string GetContentType(const std::string& url);
     void getRequestHeader(Message* message, Cia_Response_Header* header);
     int GetFile(Message* message, Cia_Response_Header* header);
+
+    void ConstructResponseStatic(Message* message);
+    void ConstructResponseRestful(Message* message);
+    void ConstructResponseOther(Message* message);
+
     void ConstructResponse(Message* message);
     // -----------------------------------
 
