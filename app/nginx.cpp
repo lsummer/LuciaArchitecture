@@ -34,7 +34,7 @@ void freesource(){
 
 int main(int argc, char* argv[]){ 
     
-    string conf_file_path("./config/lucia.conf");  // 配置文件的默认地址
+    string conf_file_path("../../config/lucia.conf");  // 配置文件的默认地址
     
     int exitcode = 0;
 

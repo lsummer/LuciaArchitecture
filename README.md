@@ -33,13 +33,20 @@ Lucia Server 可以运行在`linux`和`macOS`环境下，已在`Ubuntu 18.04.1 L
 #### 安装库
 
 [log4cpp](http://log4cpp.sourceforge.net/)
+安装完成后需要将include和lib位置放入到.bashrc中 
+```
+# 临时执行
+export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/usr/local/Cellar/log4cpp/1.1.3/include
+export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/Cellar/log4cpp/1.1.3/lib
+```
 
 #### 运行
 
 ```
+cd build
+cmake ..
 make
-
-./lucia
+./bin/lucia
 ```
 
 #### 命令
